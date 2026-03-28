@@ -22,3 +22,6 @@ npm-debug.log*
 
 # local sqlite (chatbot dev DB)
 *.db
+
+# clerk configuration (can include secrets)
+/.clerk/

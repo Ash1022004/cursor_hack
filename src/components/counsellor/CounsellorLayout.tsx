@@ -1,8 +1,10 @@
+"use client";
+
 import React from 'react';
 import Layout from '../layout/Layout';
-import ProtectedRoute from '../auth/ProtectedRoute';
 import CounsellorSidebar from './CounsellorSidebar';
 import CounsellorHeader from './CounsellorHeader';
+import { CounsellorClerkGate } from '../staff/CounsellorClerkGate';
 
 interface Props {
   title?: string;
@@ -15,14 +17,14 @@ const mainCard: React.CSSProperties = { background: '#fff', border: '1px solid #
 
 const CounsellorLayout: React.FC<Props> = ({ title, description, children }) => {
   return (
-    <ProtectedRoute allowedRoles={["counsellor"]}>
+    <CounsellorClerkGate>
       <Layout title={title} description={description} header={<CounsellorHeader />}>
         <div style={containerStyle}>
           <CounsellorSidebar />
           <div style={mainCard}>{children}</div>
         </div>
       </Layout>
-    </ProtectedRoute>
+    </CounsellorClerkGate>
   );
 };
 

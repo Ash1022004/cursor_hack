@@ -248,66 +248,79 @@ http.route({
     } catch {
       return json({ success: false, message: "Invalid JSON" }, 400);
     }
-    const errors: { msg: string; path: string }[] = [];
-    const firstName =
-      typeof body.firstName === "string" ? body.firstName.trim() : "";
-    const lastName =
-      typeof body.lastName === "string" ? body.lastName.trim() : "";
-    const university =
-      typeof body.university === "string" ? body.university.trim() : "";
-    const program =
-      typeof body.program === "string" ? body.program.trim() : "";
-    const email = validateEmail(body.email);
-    const password = typeof body.password === "string" ? body.password : "";
-    if (!firstName) errors.push({ msg: "First name is required", path: "firstName" });
-    if (!lastName) errors.push({ msg: "Last name is required", path: "lastName" });
-    if (!university) errors.push({ msg: "University is required", path: "university" });
-    if (!program) errors.push({ msg: "Program is required", path: "program" });
-    if (!email) errors.push({ msg: "Valid email is required", path: "email" });
-    if (!password.trim()) errors.push({ msg: "password is required", path: "password" });
-    if (errors.length) {
-      return json(
-        { success: false, message: "Field is required", errors },
-        400
-      );
+    try {
+      const errors: { msg: string; path: string }[] = [];
+      const firstName =
+        typeof body.firstName === "string" ? body.firstName.trim() : "";
+      const lastName =
+        typeof body.lastName === "string" ? body.lastName.trim() : "";
+      const university =
+        typeof body.university === "string" ? body.university.trim() : "";
+      const program =
+        typeof body.program === "string" ? body.program.trim() : "";
+      const email = validateEmail(body.email);
+      const password = typeof body.password === "string" ? body.password : "";
+      if (!firstName)
+        errors.push({ msg: "First name is required", path: "firstName" });
+      if (!lastName)
+        errors.push({ msg: "Last name is required", path: "lastName" });
+      if (!university)
+        errors.push({ msg: "University is required", path: "university" });
+      if (!program)
+        errors.push({ msg: "Program is required", path: "program" });
+      if (!email)
+        errors.push({ msg: "Valid email is required", path: "email" });
+      if (!password.trim())
+        errors.push({ msg: "password is required", path: "password" });
+      if (errors.length) {
+        return json(
+          { success: false, message: "Field is required", errors },
+          400
+        );
+      }
+      const contactNo = Number(body.contactNo);
+      if (Number.isNaN(contactNo)) {
+        return json(
+          { success: false, message: "Contact number must be valid" },
+          400
+        );
+      }
+      const passwordHash = await ctx.runAction(internal.jwtNode.hashPassword, {
+        password,
+      });
+      const result = await ctx.runMutation(internal.users.createStudent, {
+        email: email!,
+        passwordHash,
+        firstName,
+        lastName,
+        contactNo,
+        university,
+        program,
+        branch:
+          typeof body.branch === "string" ? body.branch.trim() : undefined,
+        semester:
+          typeof body.semester === "string" ? body.semester.trim() : undefined,
+      });
+      if (!result.ok) {
+        return json(
+          {
+            success: false,
+            message: "User already exists. Please login to continue.",
+          },
+          400
+        );
+      }
+      return json({
+        success: true,
+        message: "User registered successfully",
+        user: result.user,
+      });
+    } catch (e) {
+      console.error("[http signUp]", e);
+      const message =
+        e instanceof Error ? e.message : "Registration failed unexpectedly";
+      return json({ success: false, message }, 500);
     }
-    const contactNo = Number(body.contactNo);
-    if (Number.isNaN(contactNo)) {
-      return json(
-        { success: false, message: "Contact number must be valid" },
-        400
-      );
-    }
-    const passwordHash = await ctx.runAction(internal.jwtNode.hashPassword, {
-      password,
-    });
-    const result = await ctx.runMutation(internal.users.createStudent, {
-      email: email!,
-      passwordHash,
-      firstName,
-      lastName,
-      contactNo,
-      university,
-      program,
-      branch:
-        typeof body.branch === "string" ? body.branch.trim() : undefined,
-      semester:
-        typeof body.semester === "string" ? body.semester.trim() : undefined,
-    });
-    if (!result.ok) {
-      return json(
-        {
-          success: false,
-          message: "User already exists. Please login to continue.",
-        },
-        400
-      );
-    }
-    return json({
-      success: true,
-      message: "User registered successfully",
-      user: result.user,
-    });
   }),
 });
 
@@ -467,18 +480,26 @@ http.route({
     if (!message) {
       return json({ error: "message is required" }, 400);
     }
+    const anonymousId = `jwt:${auth.userId}`;
+    const sessionIdRaw = body.sessionId;
+    const sessionId =
+      typeof sessionIdRaw === "string" && sessionIdRaw.length > 0
+        ? (sessionIdRaw as Id<"sessions">)
+        : undefined;
     try {
-      const data = await ctx.runAction(internal.chatbotNode.chatbotChat, {
-        student_id: auth.userId,
+      const data = await ctx.runAction(internal.patientChat.runTurn, {
+        anonymousId,
+        sessionId,
         message,
-        domain:
-          typeof body.domain === "string" ? body.domain : undefined,
-        update_profile:
-          typeof body.update_profile === "boolean"
-            ? body.update_profile
-            : undefined,
       });
-      return json(data);
+      return json({
+        reply: data.reply,
+        response: data.response,
+        agentType: data.agentType,
+        sessionId: data.sessionId,
+        crisisDetected: data.crisisDetected,
+        suggestions: data.suggestions,
+      });
     } catch {
       return json({ error: "Failed to get AI response" }, 500);
     }
@@ -492,12 +513,15 @@ http.route({
   handler: httpAction(async (ctx) => {
     try {
       const r = await ctx.runAction(internal.chatbotNode.chatbotHealth, {});
-      return json({ ok: Boolean(r?.ok), upstream: r });
+      return json({
+        ok: Boolean(r?.ok),
+        providers: r,
+      });
     } catch (e) {
       return json(
         {
           ok: false,
-          error: e instanceof Error ? e.message : "Upstream not reachable",
+          error: e instanceof Error ? e.message : "LLM not configured",
         },
         500
       );

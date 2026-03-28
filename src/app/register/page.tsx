@@ -81,9 +81,13 @@ const RegisterPage: React.FC = () => {
       } else {
         setError(response.message || 'Registration failed. Please try again.');
       }
-    } catch (err: any) {
-      console.error('Registration error:', err);
-      setError(err.message || 'An error occurred during registration. Please try again.');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during registration. Please try again.';
+      console.error('Registration error:', message, err);
+      setError(message);
     }
   };
 

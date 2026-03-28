@@ -14,6 +14,12 @@ const Header: React.FC = () => {
 
   const navigation = [
     { name: 'My Space', href: '/', icon: Home, description: 'Your personal sanctuary' },
+    {
+      name: 'Saathi (anonymous)',
+      href: '/saathi',
+      icon: MessageCircle,
+      description: 'Talk privately — no account',
+    },
     { name: 'Our Story', href: '/about', icon: Info, description: 'Why we care' },
     { name: 'Wellness Kit', href: '/interventions', icon: Activity, description: 'Tools for you' },
     { name: 'Guides', href: '/resources', icon: BookOpen, description: 'Help & resources' },
@@ -78,6 +84,10 @@ const Header: React.FC = () => {
             </>
           ) : (
             <>
+              <Link href="/sign-in" className={styles.authButton} title="Counsellor / Admin">
+                <Shield size={18} />
+                Staff
+              </Link>
               <Link href="/login" className={styles.authButton}>
                 <LogIn size={18} />
                 Join In
@@ -167,6 +177,14 @@ const Header: React.FC = () => {
                 </>
               ) : (
                 <>
+                  <Link
+                    href="/sign-in"
+                    className={styles.mobileAuthButton}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Shield size={18} />
+                    Staff sign-in
+                  </Link>
                   <Link
                     href="/login"
                     className={styles.mobileAuthButton}
