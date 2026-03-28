@@ -5,13 +5,17 @@ import { api } from "@cvx/_generated/api";
 import type { Id } from "@cvx/_generated/dataModel";
 import Link from "next/link";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Bot } from "lucide-react";
 import ChatBubble from "@/components/saathi/ChatBubble";
 import ChatInput from "@/components/saathi/ChatInput";
 import CrisisBanner from "@/components/saathi/CrisisBanner";
 import MoodSparkline from "@/components/saathi/MoodSparkline";
 import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
+import TypingIndicator from "@/components/chat/TypingIndicator";
 import styles from "@/styles/components/saathi-chat.module.css";
+import uiStyles from "@/styles/components/ui/ChatInterface.module.css";
 import { useAuth } from "@/context/AuthContext";
+import { getChatbotHealth } from "@/services/chat_service";
 
 type Variant = "compact" | "full";
 
@@ -27,13 +31,16 @@ export default function MemorySaathiPanel({ variant }: Props) {
   const [sessionId, setSessionId] = useState<Id<"sessions"> | undefined>();
   const [loading, setLoading] = useState(false);
   const [crisisDetected, setCrisisDetected] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [domain, setDomain] = useState<
+    "stress" | "burnout" | "career" | "relationships"
+  >("stress");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const sendMessage = useAction(api.patientChat.sendMessage);
 
   const loginHref = `/login?returnUrl=${encodeURIComponent("/chat/memory")}`;
 
-  // Derive a stable anonymousId from the authenticated user
   const anonymousId = user ? `jwt:${user._id}` : "";
 
   const moodData = useQuery(
@@ -53,9 +60,8 @@ export default function MemorySaathiPanel({ variant }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
-  // Restore sessionId from localStorage for conversation continuity
   useEffect(() => {
     if (!anonymousId) return;
     const stored = localStorage.getItem(`saathi_memory_session_${anonymousId}`);
@@ -64,18 +70,38 @@ export default function MemorySaathiPanel({ variant }: Props) {
     }
   }, [anonymousId]);
 
+  useEffect(() => {
+    let mounted = true;
+    const check = async () => {
+      const ok = await getChatbotHealth();
+      if (mounted) setIsOnline(ok);
+    };
+    void check();
+    const id = setInterval(check, 10000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
   const handleSend = useCallback(
     async (text: string) => {
       if (!text.trim() || loading || !anonymousId) return;
 
-      setMessages((prev) => [...prev, { role: "user", content: text }]);
+      const displayText = text.trim();
+      const outbound =
+        domain === "stress"
+          ? displayText
+          : `[Topic: ${domain}] ${displayText}`;
+
+      setMessages((prev) => [...prev, { role: "user", content: displayText }]);
       setLoading(true);
 
       try {
         const result = await sendMessage({
           anonymousId,
           sessionId,
-          message: text,
+          message: outbound,
         });
 
         setMessages((prev) => [
@@ -105,137 +131,101 @@ export default function MemorySaathiPanel({ variant }: Props) {
         setLoading(false);
       }
     },
-    [loading, anonymousId, sessionId, sendMessage]
+    [loading, anonymousId, sessionId, sendMessage, domain]
   );
 
-  // ── Not authenticated: show sign-in prompt ──
+  const containerClass =
+    variant === "compact"
+      ? `${uiStyles.chatContainer} ${uiStyles.memoryEmbed}`
+      : `${uiStyles.chatContainer} ${uiStyles.memoryFullPage}`;
+
   if (!isAuthenticated) {
     return (
-      <div
-        className={
-          variant === "full"
-            ? `${styles.surface} ${styles.flexColScreen}`
-            : `${styles.surface} ${styles.flexColCompact}`
-        }
-      >
-        {variant === "full" && (
-          <header className={styles.header}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: "#7c6fcd",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
-                S
-              </span>
+      <div className={containerClass}>
+        <div className={uiStyles.memoryGate}>
+          <div className={uiStyles.memoryGateTop}>
+            <div className={uiStyles.memoryGateIcon} aria-hidden>
+              <Bot size={22} strokeWidth={2} />
             </div>
-            <div style={{ marginLeft: 12, flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#2d2d2d" }}>
-                Saathi · Memory Mode
-              </p>
-              <p style={{ fontSize: 12, color: "#8a8a8a" }}>
-                Sign in to continue
-              </p>
+            <div className={uiStyles.memoryGateTitles}>
+              <h2 className={uiStyles.memoryGateTitle}>Sehat-Saathi</h2>
+              <p className={uiStyles.memoryGateSubtitle}>Memory · Sign in to continue</p>
             </div>
-            <Link href="/" style={{ fontSize: 12, color: "#6b6b6b" }}>
-              Home
+            {variant === "full" && (
+              <Link href="/" className={uiStyles.memoryGateHome}>
+                Home
+              </Link>
+            )}
+          </div>
+          <div className={uiStyles.memoryGateBody}>
+            <p className={uiStyles.memoryGateCopy}>
+              Memory mode remembers your conversation when you&apos;re signed in, so Saathi can
+              stay consistent with you over time.
+            </p>
+            <Link href={loginHref} className={uiStyles.memoryGateCta}>
+              Sign in
             </Link>
-          </header>
-        )}
-        <div
-          style={{
-            flex: 1,
-            padding: "1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: 16,
-            background: "#f8f6f2",
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontSize: 14,
-              color: "#374151",
-              lineHeight: 1.5,
-            }}
-          >
-            Memory mode remembers your conversation context when you are signed
-            in. Sign in to chat with your personal Saathi.
-          </p>
-          <Link
-            href={loginHref}
-            style={{
-              display: "inline-block",
-              textAlign: "center",
-              background: "var(--primary-600)",
-              color: "#fff",
-              padding: "12px 20px",
-              borderRadius: "var(--radius-lg)",
-              textDecoration: "none",
-              fontWeight: 600,
-              fontSize: 14,
-            }}
-          >
-            Sign in
-          </Link>
-          <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
-            Or use <strong>Anonymous</strong> mode for a private chat without an
-            account.
-          </p>
+            <p className={uiStyles.memoryGateFoot}>
+              Or switch to <strong>Anonymous</strong> in the tab above for a private chat without
+              an account.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ── Authenticated chat ──
-  const surfaceClass =
-    variant === "full"
-      ? `${styles.surface} ${styles.flexColScreen}`
-      : `${styles.surface} ${styles.flexColCompact}`;
-
   return (
-    <div className={surfaceClass}>
-      {variant === "full" && (
-        <header className={styles.header}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "#7c6fcd",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
-              S
+    <div className={containerClass}>
+      <div className={`${uiStyles.chatHeader} ${uiStyles.chatHeaderMemory}`}>
+        <div className={uiStyles.botInfo}>
+          <Bot className={uiStyles.botIcon} />
+          <div>
+            <h3>Sehat-Saathi</h3>
+            <span
+              className={`${uiStyles.status} ${isOnline ? uiStyles.statusOnline : uiStyles.statusOffline}`}
+            >
+              {isOnline ? "Online" : "Offline"}
             </span>
           </div>
-          <div style={{ marginLeft: 12, flex: 1 }}>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#2d2d2d" }}>
-              Saathi · Memory Mode
-            </p>
-            <p style={{ fontSize: 12, color: "#8a8a8a" }}>
-              Conversations are remembered · {user?.firstName}
-            </p>
-          </div>
-          <Link href="/" style={{ fontSize: 12, color: "#6b6b6b" }}>
+        </div>
+        {variant === "full" && (
+          <Link href="/" className={uiStyles.chatHeaderLink}>
             Home
           </Link>
-        </header>
-      )}
+        )}
+      </div>
+
+      <div className={uiStyles.domainBar}>
+        <label htmlFor="domain-select-memory" className={uiStyles.domainLabel}>
+          Topic:
+        </label>
+        <select
+          id="domain-select-memory"
+          value={domain}
+          onChange={(e) =>
+            setDomain(
+              e.target.value as "stress" | "burnout" | "career" | "relationships"
+            )
+          }
+          className={uiStyles.domainSelect}
+          aria-label="Select conversation topic"
+        >
+          <option value="stress">Stress</option>
+          <option value="burnout">Burnout</option>
+          <option value="career">Career</option>
+          <option value="relationships">Relationships</option>
+        </select>
+      </div>
 
       {moodData && moodData.length >= 2 && (
-        <div style={{ padding: "6px 16px", borderBottom: "1px solid #e8e4de", background: "#fff" }}>
+        <div
+          style={{
+            padding: "6px 16px",
+            borderBottom: "1px solid #e8e4de",
+            background: "#fff",
+          }}
+        >
           <MoodSparkline data={moodData} />
         </div>
       )}
@@ -251,13 +241,7 @@ export default function MemorySaathiPanel({ variant }: Props) {
             agentType={msg.agentType}
           />
         ))}
-        {loading && (
-          <div style={{ padding: "8px 16px" }}>
-            <span style={{ fontSize: 12, color: "#8a8a8a" }}>
-              Saathi is thinking…
-            </span>
-          </div>
-        )}
+        {loading && <TypingIndicator />}
         <div ref={bottomRef} />
       </div>
 

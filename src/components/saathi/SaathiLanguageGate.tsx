@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { Globe } from "lucide-react";
 import { api } from "@cvx/_generated/api";
 import styles from "@/styles/components/saathi-chat.module.css";
 
@@ -33,38 +34,36 @@ export default function SaathiLanguageGate({ onReady, compact }: Props) {
 
   return (
     <div
-      style={
-        compact
-          ? { padding: "12px 16px", textAlign: "left" as const }
-          : { textAlign: "center" as const }
-      }
+      className={`${styles.langGate} ${compact ? styles.langGateCompact : styles.langGateCenter}`}
     >
-      <p
-        style={{
-          fontSize: compact ? 13 : 14,
-          color: "#6b6b6b",
-          marginBottom: compact ? 8 : 12,
-        }}
-      >
-        Choose your language / زبان منتخب کریں
-      </p>
+      {compact ? (
+        <p className={styles.langPromptCompact}>
+          Choose your language / زبان منتخب کریں
+        </p>
+      ) : (
+        <div className={styles.langPromptRow}>
+          <Globe className={styles.langPromptIcon} size={20} strokeWidth={2} aria-hidden />
+          <p className={styles.langPrompt}>
+            Choose your language / زبان منتخب کریں
+          </p>
+        </div>
+      )}
       <div className={styles.langGrid}>
         {LANGUAGES.map((lang) => (
           <button
             key={lang.code}
             type="button"
             onClick={() => void handleStart(lang.code)}
-            className={styles.langBtn}
-            style={compact ? { padding: "10px 12px", fontSize: 13 } : undefined}
+            className={`${styles.langBtn} ${compact ? styles.langBtnCompact : ""}`}
           >
             {lang.label}
           </button>
         ))}
       </div>
       {!compact && (
-        <p style={{ fontSize: 12, color: "#8a8a8a", marginTop: 16 }}>
+        <p className={styles.langCrisis}>
           In crisis right now?{" "}
-          <a href="tel:9152987821" style={{ color: "#7c6fcd" }}>
+          <a href="tel:9152987821" className={styles.langCrisisLink}>
             Call iCall: 9152987821
           </a>
         </p>

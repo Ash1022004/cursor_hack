@@ -11,7 +11,9 @@ import CrisisBanner from "@/components/saathi/CrisisBanner";
 import MoodSparkline from "@/components/saathi/MoodSparkline";
 import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
 import SaathiLanguageGate from "@/components/saathi/SaathiLanguageGate";
+import TypingIndicator from "@/components/chat/TypingIndicator";
 import styles from "@/styles/components/saathi-chat.module.css";
+import { Activity } from "lucide-react";
 
 const WELCOME =
   "Namaste. I am Saathi, your mental health companion. This is a private space — you can share anything here. How are you feeling today?";
@@ -159,44 +161,24 @@ export default function AnonymousSaathiPanel({ variant }: Props) {
     <div className={surfaceClass}>
       {variant === "full" && (
         <header className={styles.header}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "#7c6fcd",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>S</span>
+          <div className={styles.headerAvatar} aria-hidden>
+            <span className={styles.headerHeartbeat}>
+              <Activity size={20} strokeWidth={2.5} />
+            </span>
           </div>
-          <div style={{ marginLeft: 12, flex: 1 }}>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#2d2d2d" }}>
-              Saathi
-            </p>
-            <p style={{ fontSize: 12, color: "#8a8a8a" }}>
-              Mental health companion · Anonymous
-            </p>
+          <div className={styles.headerBrand}>
+            <p className={styles.headerTitle}>Saathi • Your Health Companion</p>
+            <p className={styles.headerSub}>Mental health companion · Anonymous</p>
           </div>
           <button
             type="button"
             onClick={handleChangeLanguage}
-            style={{
-              fontSize: 12,
-              color: "#7c6fcd",
-              border: "1px solid #7c6fcd",
-              borderRadius: 999,
-              padding: "4px 12px",
-              marginRight: 8,
-              background: "transparent",
-              cursor: "pointer",
-            }}
+            className={styles.headerLink}
+            style={{ cursor: "pointer", fontFamily: "inherit" }}
           >
             Language
           </button>
-          <Link href="/" style={{ fontSize: 12, color: "#6b6b6b" }}>
+          <Link href="/" className={styles.headerLinkMuted}>
             Home
           </Link>
         </header>
@@ -231,13 +213,7 @@ export default function AnonymousSaathiPanel({ variant }: Props) {
             agentType={msg.agentType}
           />
         ))}
-        {loading && (
-          <div style={{ padding: "8px 16px" }}>
-            <span style={{ fontSize: 12, color: "#8a8a8a" }}>
-              Saathi is thinking…
-            </span>
-          </div>
-        )}
+        {loading && <TypingIndicator />}
         <div ref={bottomRef} />
       </div>
 
