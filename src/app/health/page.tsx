@@ -20,7 +20,7 @@ const tools = [
   {
     href: "/appointments",
     title: "Appointments",
-    description: "Request a basic appointment slot (demo storage).",
+    description: "Book with a hospital and doctor via your connected appointment API.",
     Icon: Calendar,
   },
   {

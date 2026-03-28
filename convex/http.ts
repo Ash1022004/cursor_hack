@@ -852,4 +852,22 @@ http.route({
   }),
 });
 
+// --- Health tools: hospitals from Apify (uses APIFY_TOKEN on Convex) ---
+http.route({
+  path: "/api/apify/hospitals",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    try {
+      const hospitals = await ctx.runAction(
+        internal.hospitalsNode.fetchApifyHospitals,
+        {}
+      );
+      return json({ hospitals });
+    } catch (e) {
+      console.error("[http /api/apify/hospitals]", e);
+      return json({ hospitals: [] });
+    }
+  }),
+});
+
 export default http;
