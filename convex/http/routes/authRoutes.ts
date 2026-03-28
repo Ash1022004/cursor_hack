@@ -257,6 +257,94 @@ export function registerAuthRoutes(http: HttpRouter): void {
   });
 
   http.route({
+    path: "/api/auth/signUp/counsellor",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+      let body: Record<string, unknown>;
+      try {
+        body = (await request.json()) as Record<string, unknown>;
+      } catch {
+        return json({ success: false, message: "Invalid JSON" }, 400);
+      }
+      try {
+        const errors: { msg: string; path: string }[] = [];
+        const firstName =
+          typeof body.firstName === "string" ? body.firstName.trim() : "";
+        const lastName =
+          typeof body.lastName === "string" ? body.lastName.trim() : "";
+        const qualifications =
+          typeof body.qualifications === "string" ? body.qualifications.trim() : "";
+        const email = validateEmail(body.email);
+        const password = typeof body.password === "string" ? body.password : "";
+        const availability =
+          typeof body.availability === "string" ? body.availability.trim() : "";
+        if (!firstName)
+          errors.push({ msg: "First name is required", path: "firstName" });
+        if (!lastName)
+          errors.push({ msg: "Last name is required", path: "lastName" });
+        if (!qualifications)
+          errors.push({ msg: "Qualifications are required", path: "qualifications" });
+        if (!email)
+          errors.push({ msg: "Valid email is required", path: "email" });
+        if (!password.trim())
+          errors.push({ msg: "Password is required", path: "password" });
+        if (!availability)
+          errors.push({ msg: "Availability is required", path: "availability" });
+        if (errors.length) {
+          return json(
+            { success: false, message: "Validation error", errors },
+            422
+          );
+        }
+        const contactNo = Number(body.contactNo);
+        if (Number.isNaN(contactNo)) {
+          return json(
+            { success: false, message: "Contact number must be valid" },
+            400
+          );
+        }
+        const specialization = Array.isArray(body.specialization)
+          ? (body.specialization as string[]).map((s) =>
+              typeof s === "string" ? s.trim() : ""
+            ).filter(Boolean)
+          : [];
+        const passwordHash = await ctx.runAction(internal.jwtNode.hashPassword, {
+          password,
+        });
+        const result = await ctx.runMutation(internal.users.createCounsellor, {
+          email: email!,
+          passwordHash,
+          firstName,
+          lastName,
+          contactNo,
+          qualifications,
+          specialization,
+          availability,
+        });
+        if (!result.ok) {
+          return json(
+            {
+              success: false,
+              message: "An account with this email already exists.",
+            },
+            400
+          );
+        }
+        return json({
+          success: true,
+          message: "Counsellor registered successfully",
+          counsellor: result.counsellor,
+        });
+      } catch (e) {
+        console.error("[http signUp/counsellor]", e);
+        const message =
+          e instanceof Error ? e.message : "Registration failed unexpectedly";
+        return json({ success: false, message }, 500);
+      }
+    }),
+  });
+
+  http.route({
     path: "/api/auth/logout",
     method: "POST",
     handler: httpAction(async () => {

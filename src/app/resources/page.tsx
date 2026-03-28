@@ -1,121 +1,123 @@
 "use client";
 
-import React, { useState } from 'react';
-import Layout from '@/components/layout/Layout';
-import { BookOpen, FileText, Video, Headphones, Download, ExternalLink } from 'lucide-react';
-import AssessmentSelector from '@/components/assessments/AssessmentSelector';
-import styles from '@/styles/pages/Resources.module.css';
+import React, { useState, useCallback } from "react";
+import { useAction, useQuery } from "convex/react";
+import { api } from "@cvx/_generated/api";
+import Layout from "@/components/layout/Layout";
+import {
+  BookOpen,
+  FileText,
+  ExternalLink,
+  Search,
+  Loader2,
+} from "lucide-react";
+import AssessmentSelector from "@/components/assessments/AssessmentSelector";
+import styles from "@/styles/pages/Resources.module.css";
+
+/** Extract a readable domain name from a URL (e.g. "psychologytoday.com" → "Psychology Today") */
+function getDomainLabel(url: string): string {
+  const nice: Record<string, string> = {
+    "healthline.com": "Healthline",
+    "verywellmind.com": "Verywell Mind",
+    "psychologytoday.com": "Psychology Today",
+    "mayoclinic.org": "Mayo Clinic",
+    "who.int": "WHO",
+    "nimhans.ac.in": "NIMHANS",
+    "mind.org.uk": "Mind UK",
+    "nhs.uk": "NHS",
+    "helpguide.org": "HelpGuide",
+    "medlineplus.gov": "MedlinePlus",
+  };
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    for (const [domain, label] of Object.entries(nice)) {
+      if (host.includes(domain)) return label;
+    }
+    // Fallback: capitalize domain
+    return host.split(".").slice(0, -1).join(".").replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()) || host;
+  } catch {
+    return "Article";
+  }
+}
+
+/** Clean up raw Exa snippets — remove markdown artifacts, duplicate titles, etc. */
+function cleanSnippet(raw: string): string {
+  return raw
+    .replace(/#{1,6}\s*/g, "")         // remove markdown headings
+    .replace(/\|/g, " ")               // remove pipe chars
+    .replace(/\*{1,2}/g, "")           // remove bold/italic markers
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // [text](url) → text
+    .replace(/\s{2,}/g, " ")           // collapse whitespace
+    .replace(/^\s+/, "")               // trim leading
+    .trim();
+}
+
+const BROWSE_TOPICS = [
+  "depression",
+  "anxiety",
+  "exam stress",
+  "sleep problems",
+  "loneliness",
+  "grief and loss",
+  "panic attacks",
+  "academic pressure",
+  "mindfulness techniques",
+  "breathing exercises",
+  "anger management",
+  "social anxiety",
+  "relationship issues",
+  "self-harm support",
+  "OCD",
+  "PTSD",
+];
+
+type ResourceResult = {
+  title: string;
+  url: string;
+  snippet: string;
+  source: string;
+  topic: string;
+};
 
 const ResourcesPage: React.FC = () => {
   const [showAssessments, setShowAssessments] = useState(false);
-  const resourceCategories = [
-    {
-      id: 'articles',
-      title: 'Articles & Guides',
-      description: 'Evidence-based articles and practical guides for mental health',
-      icon: FileText,
-      color: 'var(--primary-500)',
-      resources: [
-        {
-          title: 'Understanding Anxiety in College Students',
-          description: 'A comprehensive guide to recognizing and managing anxiety during your academic journey.',
-          type: 'Article',
-          readTime: '8 min read',
-        },
-        {
-          title: 'Building Healthy Study Habits',
-          description: 'Learn how to create sustainable study routines that support your mental health.',
-          type: 'Guide',
-          readTime: '12 min read',
-        },
-        {
-          title: 'Managing Academic Stress',
-          description: 'Practical strategies for dealing with exam stress and academic pressure.',
-          type: 'Article',
-          readTime: '6 min read',
-        },
-      ],
-    },
-    {
-      id: 'videos',
-      title: 'Video Content',
-      description: 'Educational videos and guided sessions',
-      icon: Video,
-      color: 'var(--secondary-500)',
-      resources: [
-        {
-          title: 'Introduction to Mindfulness',
-          description: 'A beginner-friendly introduction to mindfulness practices for students.',
-          type: 'Video',
-          readTime: '15 min',
-        },
-        {
-          title: 'Breathing Exercises for Stress Relief',
-          description: 'Learn simple breathing techniques to manage stress and anxiety.',
-          type: 'Video',
-          readTime: '10 min',
-        },
-        {
-          title: 'Building Resilience',
-          description: 'Strategies for developing emotional resilience during challenging times.',
-          type: 'Video',
-          readTime: '20 min',
-        },
-      ],
-    },
-    {
-      id: 'audio',
-      title: 'Audio Resources',
-      description: 'Guided meditations and relaxation audio',
-      icon: Headphones,
-      color: 'var(--accent-teal)',
-      resources: [
-        {
-          title: 'Guided Meditation for Sleep',
-          description: 'A calming meditation to help you fall asleep and improve sleep quality.',
-          type: 'Audio',
-          readTime: '25 min',
-        },
-        {
-          title: 'Morning Mindfulness',
-          description: 'Start your day with intention and calm with this morning meditation.',
-          type: 'Audio',
-          readTime: '10 min',
-        },
-        {
-          title: 'Stress Relief Soundscape',
-          description: 'Nature sounds and gentle music to help you relax and unwind.',
-          type: 'Audio',
-          readTime: '30 min',
-        },
-      ],
-    },
-  ];
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTopic, setActiveTopic] = useState("");
+  const [results, setResults] = useState<ResourceResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const quickLinks = [
-    {
-      title: 'Crisis Support',
-      description: '24/7 mental health crisis resources',
-      icon: ExternalLink,
-      href: '#',
-      urgent: true,
+  const searchResources = useAction(api.resources.searchResources);
+  const cachedTopics = useQuery(api.resourcesDb.listTopics);
+
+  const doSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) return;
+      setIsSearching(true);
+      setHasSearched(true);
+      setActiveTopic(query.toLowerCase().trim());
+      try {
+        const res = await searchResources({ query: query.trim() });
+        setResults(res as ResourceResult[]);
+      } catch {
+        setResults([]);
+      } finally {
+        setIsSearching(false);
+      }
     },
-    {
-      title: 'Campus Resources',
-      description: 'Connect with your university counseling center',
-      icon: BookOpen,
-      href: '#',
-      urgent: false,
-    },
-    {
-      title: 'Self-Assessment Tools',
-      description: 'Take a quick mental health assessment',
-      icon: FileText,
-      href: '#',
-      urgent: false,
-      onClick: () => setShowAssessments(true),
-    },
-  ];
+    [searchResources]
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    doSearch(searchQuery);
+  };
+
+  const handleChipClick = (topic: string) => {
+    setSearchQuery(topic);
+    doSearch(topic);
+  };
 
   if (showAssessments) {
     return (
@@ -128,10 +130,40 @@ const ResourcesPage: React.FC = () => {
     );
   }
 
+  // Merge browse topics with any DB-cached topics for chips
+  const allTopics = Array.from(
+    new Set([...BROWSE_TOPICS, ...(cachedTopics ?? [])])
+  ).sort();
+
+  const quickLinks = [
+    {
+      title: "Crisis Support",
+      description: "24/7 mental health crisis resources",
+      icon: ExternalLink,
+      href: "#",
+      urgent: true,
+    },
+    {
+      title: "Campus Resources",
+      description: "Connect with your university counseling center",
+      icon: BookOpen,
+      href: "#",
+      urgent: false,
+    },
+    {
+      title: "Self-Assessment Tools",
+      description: "Take a quick mental health assessment",
+      icon: FileText,
+      href: "#",
+      urgent: false,
+      onClick: () => setShowAssessments(true),
+    },
+  ];
+
   return (
     <Layout
       title="Resources - Sehat-Saathi"
-      description="Access a comprehensive library of mental health resources, articles, videos, and tools designed for college students."
+      description="Search our Exa-powered library of curated mental health resources, articles, and self-help guides."
     >
       <div className={styles.resources}>
         {/* Hero Section */}
@@ -140,10 +172,106 @@ const ResourcesPage: React.FC = () => {
             <div className={styles.heroContent}>
               <h1 className={styles.heroTitle}>Mental Health Resources</h1>
               <p className={styles.heroSubtitle}>
-                Access our comprehensive library of evidence-based resources, 
-                articles, and tools to support your mental health journey.
+                Search our curated library of evidence-based articles, guides,
+                and self-help resources — powered by Exa AI search.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Search Section */}
+        <section className={styles.searchSection}>
+          <div className={styles.container}>
+            <form className={styles.searchBar} onSubmit={handleSubmit}>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Search for a topic... (e.g. anxiety, exam stress, sleep)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                type="submit"
+                className={styles.searchButton}
+                disabled={isSearching || !searchQuery.trim()}
+              >
+                {isSearching ? (
+                  <Loader2 size={18} className={styles.spinnerInline} />
+                ) : (
+                  <Search size={18} />
+                )}
+                {isSearching ? "Searching..." : "Search"}
+              </button>
+            </form>
+
+            {/* Topic Chips */}
+            <div className={styles.topicChips}>
+              {allTopics.map((topic) => (
+                <button
+                  key={topic}
+                  className={`${styles.topicChip} ${activeTopic === topic ? styles.topicChipActive : ""}`}
+                  onClick={() => handleChipClick(topic)}
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
+
+            {/* Results */}
+            {isSearching && (
+              <div className={styles.loadingState}>
+                <div className={styles.spinner} />
+                <p>
+                  Searching resources for &quot;{activeTopic}&quot;...
+                </p>
+              </div>
+            )}
+
+            {!isSearching && hasSearched && results.length === 0 && (
+              <div className={styles.emptyState}>
+                <p>No resources found for &quot;{activeTopic}&quot;.</p>
+                <p>Try a different topic or check back later.</p>
+              </div>
+            )}
+
+            {!isSearching && results.length > 0 && (
+              <>
+                <h2 className={styles.sectionTitle}>
+                  Resources for &quot;{activeTopic}&quot;
+                </h2>
+                <div className={styles.resultsGrid}>
+                  {results.map((r, i) => {
+                    const cleaned = cleanSnippet(r.snippet);
+                    const domain = getDomainLabel(r.url);
+                    return (
+                      <div key={`${r.url}-${i}`} className={styles.resultCard}>
+                        <h3 className={styles.resultTitle}>{r.title}</h3>
+                        <p className={styles.resultSnippet}>
+                          {cleaned.length > 250
+                            ? cleaned.slice(0, 250) + "..."
+                            : cleaned}
+                        </p>
+                        <div className={styles.resultFooter}>
+                          <span className={styles.resultSource}>{domain}</span>
+                          <a
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.resultLink}
+                          >
+                            Read More <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className={styles.poweredBy}>
+                  Powered by Exa AI Search — results are cached for faster
+                  access
+                </p>
+              </>
+            )}
           </div>
         </section>
 
@@ -155,69 +283,20 @@ const ResourcesPage: React.FC = () => {
               {quickLinks.map((link, index) => {
                 const Icon = link.icon;
                 return (
-                  <div 
-                    key={index} 
-                    className={`${styles.quickLinkCard} ${link.urgent ? styles.urgent : ''}`}
+                  <div
+                    key={index}
+                    className={`${styles.quickLinkCard} ${link.urgent ? styles.urgent : ""}`}
                     onClick={link.onClick}
-                    style={{ cursor: link.onClick ? 'pointer' : 'default' }}
+                    style={{ cursor: link.onClick ? "pointer" : "default" }}
                   >
                     <div className={styles.quickLinkIcon}>
                       <Icon size={24} />
                     </div>
                     <div className={styles.quickLinkContent}>
                       <h3 className={styles.quickLinkTitle}>{link.title}</h3>
-                      <p className={styles.quickLinkDescription}>{link.description}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Resource Categories */}
-        <section className={styles.resourceCategories}>
-          <div className={styles.container}>
-            <h2 className={styles.sectionTitle}>Resource Library</h2>
-            <p className={styles.sectionSubtitle}>
-              Explore our curated collection of mental health resources
-            </p>
-
-            <div className={styles.categoriesGrid}>
-              {resourceCategories.map((category) => {
-                const Icon = category.icon;
-                return (
-                  <div key={category.id} className={styles.categoryCard}>
-                    <div className={styles.categoryHeader}>
-                      <div className={styles.categoryIcon} style={{ backgroundColor: `${category.color}15` }}>
-                        <Icon size={32} style={{ color: category.color }} />
-                      </div>
-                      <div className={styles.categoryInfo}>
-                        <h3 className={styles.categoryTitle}>{category.title}</h3>
-                        <p className={styles.categoryDescription}>{category.description}</p>
-                      </div>
-                    </div>
-
-                    <div className={styles.resourcesList}>
-                      {category.resources.map((resource, index) => (
-                        <div key={index} className={styles.resourceItem}>
-                          <div className={styles.resourceContent}>
-                            <h4 className={styles.resourceTitle}>{resource.title}</h4>
-                            <p className={styles.resourceDescription}>{resource.description}</p>
-                            <div className={styles.resourceMeta}>
-                              <span className={styles.resourceType}>{resource.type}</span>
-                              <span className={styles.resourceTime}>{resource.readTime}</span>
-                            </div>
-                          </div>
-                          <button className={styles.resourceButton}>
-                            {resource.type === 'Audio' ? <Headphones size={16} /> : 
-                             resource.type === 'Video' ? <Video size={16} /> : 
-                             <FileText size={16} />}
-                            {resource.type === 'Audio' ? 'Listen' : 
-                             resource.type === 'Video' ? 'Watch' : 'Read'}
-                          </button>
-                        </div>
-                      ))}
+                      <p className={styles.quickLinkDescription}>
+                        {link.description}
+                      </p>
                     </div>
                   </div>
                 );

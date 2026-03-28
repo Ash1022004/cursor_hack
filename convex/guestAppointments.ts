@@ -39,6 +39,17 @@ export const createGuest = mutation({
   },
 });
 
+export const assignCounsellor = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    counsellorId: v.string(),
+  },
+  handler: async (ctx, { appointmentId, counsellorId }) => {
+    await ctx.db.patch(appointmentId, { counsellorId });
+    return { ok: true };
+  },
+});
+
 export const listRecent = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {

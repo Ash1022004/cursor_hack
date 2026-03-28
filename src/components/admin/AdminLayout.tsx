@@ -4,7 +4,7 @@ import React from 'react';
 import Layout from '../layout/Layout';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
-import { AdminClerkGate } from '../staff/AdminClerkGate';
+import { AdminJwtGate } from '../staff/AdminJwtGate';
 
 interface Props {
   title?: string;
@@ -17,14 +17,14 @@ const mainCard: React.CSSProperties = { background: '#fff', border: '1px solid #
 
 const AdminLayout: React.FC<Props> = ({ title, description, children }) => {
   return (
-    <AdminClerkGate>
+    <AdminJwtGate>
       <Layout title={title} description={description} header={<AdminHeader />}>
         <div style={containerStyle}>
           <AdminSidebar />
           <div style={mainCard}>{children}</div>
         </div>
       </Layout>
-    </AdminClerkGate>
+    </AdminJwtGate>
   );
 };
 

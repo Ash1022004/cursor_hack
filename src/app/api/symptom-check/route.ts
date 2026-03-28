@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { api } from "@cvx/_generated/api";
+import { getConvexHttpClient } from "@/lib/convexHttp";
 import { runSymptomCheck } from "@/lib/symptomCheck";
 import { MEDICAL_DISCLAIMER } from "@/lib/medicalDisclaimer";
 
@@ -26,7 +28,10 @@ export async function POST(request: Request) {
     (Array.isArray(symptoms) && symptoms.length === 0)
   ) {
     return NextResponse.json(
-      { error: "symptoms is required (string or non-empty array)", disclaimer: MEDICAL_DISCLAIMER },
+      {
+        error: "symptoms is required (string or non-empty array)",
+        disclaimer: MEDICAL_DISCLAIMER,
+      },
       { status: 422 }
     );
   }
@@ -49,12 +54,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await runSymptomCheck({
+  const input = {
     symptoms: symptoms as string | string[],
     age,
     gender,
     duration,
-  });
+  };
 
-  return NextResponse.json(result);
+  const convex = getConvexHttpClient();
+  if (convex) {
+    try {
+      const result = await convex.action(api.symptomCheckRag.runRag, input);
+      return NextResponse.json(result);
+    } catch (e) {
+      console.error("symptomCheckRag failed", e);
+      const fallback = await runSymptomCheck(input);
+      return NextResponse.json(fallback);
+    }
+  }
+
+  const fallback = await runSymptomCheck(input);
+  return NextResponse.json(fallback);
 }

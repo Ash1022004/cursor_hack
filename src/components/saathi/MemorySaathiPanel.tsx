@@ -1,18 +1,21 @@
 "use client";
 
+import { useAction, useQuery } from "convex/react";
+import { api } from "@cvx/_generated/api";
+import type { Id } from "@cvx/_generated/dataModel";
 import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
-import { Bot, Send, User } from "lucide-react";
-import styles from "@/styles/components/ui/ChatInterface.module.css";
-import { sendAIChat, getChatbotHealth } from "@/services/chat_service";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Bot } from "lucide-react";
+import ChatBubble from "@/components/saathi/ChatBubble";
+import ChatInput from "@/components/saathi/ChatInput";
+import CrisisBanner from "@/components/saathi/CrisisBanner";
+import MoodSparkline from "@/components/saathi/MoodSparkline";
+import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
+import TypingIndicator from "@/components/chat/TypingIndicator";
+import styles from "@/styles/components/saathi-chat.module.css";
+import uiStyles from "@/styles/components/ui/ChatInterface.module.css";
 import { useAuth } from "@/context/AuthContext";
-
-interface Message {
-  id: string;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-}
+import { getChatbotHealth } from "@/services/chat_service";
 
 type Variant = "compact" | "full";
 
@@ -22,52 +25,50 @@ type Props = {
 
 export default function MemorySaathiPanel({ variant }: Props) {
   const { user, isAuthenticated } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<
+    { role: "user" | "assistant"; content: string; agentType?: string }[]
+  >([]);
+  const [sessionId, setSessionId] = useState<Id<"sessions"> | undefined>();
+  const [loading, setLoading] = useState(false);
+  const [crisisDetected, setCrisisDetected] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const [domain, setDomain] = useState<
     "stress" | "burnout" | "career" | "relationships"
   >("stress");
-  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const sendMessage = useAction(api.patientChat.sendMessage);
 
   const loginHref = `/login?returnUrl=${encodeURIComponent("/chat/memory")}`;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const anonymousId = user ? `jwt:${user._id}` : "";
+
+  const moodData = useQuery(
+    api.moodLogs.getRecentForPatient,
+    anonymousId ? { anonymousId } : "skip"
+  );
+
+  const WELCOME = user
+    ? `Hi ${user.firstName}! I'm Saathi, your mental health companion. Your conversations are remembered so I can support you better over time. How are you feeling today?`
+    : "Hi there! I'm Saathi, your mental health companion. How are you feeling today?";
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setMessages([]);
-      return;
+    if (isAuthenticated && messages.length === 0) {
+      setMessages([{ role: "assistant", content: WELCOME }]);
     }
-    if (messages.length === 0) {
-      if (user) {
-        setMessages([
-          {
-            id: "1",
-            text: `Hi ${user.firstName}! I'm Sehat-Saathi, your supportive companion. How are you feeling today? 💚`,
-            sender: "bot",
-            timestamp: new Date(),
-          },
-        ]);
-      } else {
-        setMessages([
-          {
-            id: "1",
-            text: "Hi there! I'm Sehat-Saathi, your supportive companion. How are you feeling today? 💚",
-            sender: "bot",
-            timestamp: new Date(),
-          },
-        ]);
-      }
-    }
-  }, [user, isAuthenticated, messages.length]);
+  }, [isAuthenticated, messages.length, WELCOME]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (!anonymousId) return;
+    const stored = localStorage.getItem(`saathi_memory_session_${anonymousId}`);
+    if (stored) {
+      setSessionId(stored as Id<"sessions">);
+    }
+  }, [anonymousId]);
 
   useEffect(() => {
     let mounted = true;
@@ -83,103 +84,90 @@ export default function MemorySaathiPanel({ variant }: Props) {
     };
   }, []);
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim() || !isAuthenticated) return;
+  const handleSend = useCallback(
+    async (text: string) => {
+      if (!text.trim() || loading || !anonymousId) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: "user",
-      timestamp: new Date(),
-    };
+      const displayText = text.trim();
+      const outbound =
+        domain === "stress"
+          ? displayText
+          : `[Topic: ${domain}] ${displayText}`;
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputText("");
-    setIsTyping(true);
-    try {
-      const data = await sendAIChat({
-        message: userMessage.text,
-        domain,
-        update_profile: undefined,
-      });
-      const botText = data?.reply || "I'm here for you.";
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botText,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      const suggestions: string[] | undefined = data?.suggestions;
+      setMessages((prev) => [...prev, { role: "user", content: displayText }]);
+      setLoading(true);
 
-      setMessages((prev) => {
-        const next = [...prev, botMessage];
-        if (suggestions && suggestions.length) {
-          const sugText = `Suggestions:\n- ${suggestions.join("\n- ")}`;
-          next.push({
-            id: (Date.now() + 2).toString(),
-            text: sugText,
-            sender: "bot",
-            timestamp: new Date(),
-          });
-        }
-        return next;
-      });
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 3).toString(),
-          text: "Sorry, I could not connect right now. Please try again.",
-          sender: "bot",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
+      try {
+        const result = await sendMessage({
+          anonymousId,
+          sessionId,
+          message: outbound,
+        });
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      void handleSendMessage();
-    }
-  };
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: result.response,
+            agentType: result.agentType,
+          },
+        ]);
+        setSessionId(result.sessionId);
+        localStorage.setItem(
+          `saathi_memory_session_${anonymousId}`,
+          result.sessionId
+        );
+        if (result.crisisDetected) setCrisisDetected(true);
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "I'm having trouble connecting right now. Please try again in a moment.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading, anonymousId, sessionId, sendMessage, domain]
+  );
 
   const containerClass =
     variant === "compact"
-      ? `${styles.chatContainer} ${styles.memoryEmbed}`
-      : `${styles.chatContainer} ${styles.memoryFullPage}`;
+      ? `${uiStyles.chatContainer} ${uiStyles.memoryEmbed}`
+      : `${uiStyles.chatContainer} ${uiStyles.memoryFullPage}`;
 
   if (!isAuthenticated) {
     return (
       <div className={containerClass}>
-        <div className={styles.memoryGate}>
-          <div className={styles.memoryGateTop}>
-            <div className={styles.memoryGateIcon} aria-hidden>
+        <div className={uiStyles.memoryGate}>
+          <div className={uiStyles.memoryGateTop}>
+            <div className={uiStyles.memoryGateIcon} aria-hidden>
               <Bot size={22} strokeWidth={2} />
             </div>
-            <div className={styles.memoryGateTitles}>
-              <h2 className={styles.memoryGateTitle}>Sehat-Saathi</h2>
-              <p className={styles.memoryGateSubtitle}>Memory · Sign in to continue</p>
+            <div className={uiStyles.memoryGateTitles}>
+              <h2 className={uiStyles.memoryGateTitle}>Sehat-Saathi</h2>
+              <p className={uiStyles.memoryGateSubtitle}>Memory · Sign in to continue</p>
             </div>
             {variant === "full" && (
-              <Link href="/" className={styles.memoryGateHome}>
+              <Link href="/" className={uiStyles.memoryGateHome}>
                 Home
               </Link>
             )}
           </div>
-          <div className={styles.memoryGateBody}>
-            <p className={styles.memoryGateCopy}>
-              Memory mode remembers your conversation when you&apos;re signed in, so
-              Saathi can stay consistent with you over time.
+          <div className={uiStyles.memoryGateBody}>
+            <p className={uiStyles.memoryGateCopy}>
+              Memory mode remembers your conversation when you&apos;re signed in, so Saathi can
+              stay consistent with you over time.
             </p>
-            <Link href={loginHref} className={styles.memoryGateCta}>
+            <Link href={loginHref} className={uiStyles.memoryGateCta}>
               Sign in
             </Link>
-            <p className={styles.memoryGateFoot}>
-              Or switch to <strong>Anonymous</strong> in the tab above for a private chat
-              without an account.
+            <p className={uiStyles.memoryGateFoot}>
+              Or switch to <strong>Anonymous</strong> in the tab above for a private chat without
+              an account.
             </p>
           </div>
         </div>
@@ -189,27 +177,27 @@ export default function MemorySaathiPanel({ variant }: Props) {
 
   return (
     <div className={containerClass}>
-      <div className={`${styles.chatHeader} ${styles.chatHeaderMemory}`}>
-        <div className={styles.botInfo}>
-          <Bot className={styles.botIcon} />
+      <div className={`${uiStyles.chatHeader} ${uiStyles.chatHeaderMemory}`}>
+        <div className={uiStyles.botInfo}>
+          <Bot className={uiStyles.botIcon} />
           <div>
             <h3>Sehat-Saathi</h3>
             <span
-              className={`${styles.status} ${isOnline ? styles.statusOnline : styles.statusOffline}`}
+              className={`${uiStyles.status} ${isOnline ? uiStyles.statusOnline : uiStyles.statusOffline}`}
             >
               {isOnline ? "Online" : "Offline"}
             </span>
           </div>
         </div>
         {variant === "full" && (
-          <Link href="/" className={styles.chatHeaderLink}>
+          <Link href="/" className={uiStyles.chatHeaderLink}>
             Home
           </Link>
         )}
       </div>
 
-      <div className={styles.domainBar}>
-        <label htmlFor="domain-select-memory" className={styles.domainLabel}>
+      <div className={uiStyles.domainBar}>
+        <label htmlFor="domain-select-memory" className={uiStyles.domainLabel}>
           Topic:
         </label>
         <select
@@ -220,7 +208,7 @@ export default function MemorySaathiPanel({ variant }: Props) {
               e.target.value as "stress" | "burnout" | "career" | "relationships"
             )
           }
-          className={styles.domainSelect}
+          className={uiStyles.domainSelect}
           aria-label="Select conversation topic"
         >
           <option value="stress">Stress</option>
@@ -230,63 +218,59 @@ export default function MemorySaathiPanel({ variant }: Props) {
         </select>
       </div>
 
-      <div className={styles.messagesContainer}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`${styles.message} ${styles[message.sender]}`}
-          >
-            <div className={styles.messageIcon}>
-              {message.sender === "user" ? <User size={16} /> : <Bot size={16} />}
-            </div>
-            <div className={styles.messageContent}>
-              <p>{message.text}</p>
-              <span className={styles.timestamp}>
-                {message.timestamp.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          </div>
-        ))}
-
-        {isTyping && (
-          <div className={`${styles.message} ${styles.bot}`}>
-            <div className={styles.messageIcon}>
-              <Bot size={16} />
-            </div>
-            <div className={styles.messageContent}>
-              <div className={styles.typingIndicator}>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div className={styles.inputContainer}>
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message here..."
-          className={styles.messageInput}
-          rows={1}
-        />
-        <button
-          type="button"
-          onClick={() => void handleSendMessage()}
-          disabled={!inputText.trim()}
-          className={styles.sendButton}
+      {moodData && moodData.length >= 2 && (
+        <div
+          style={{
+            padding: "6px 16px",
+            borderBottom: "1px solid #e8e4de",
+            background: "#fff",
+          }}
         >
-          <Send size={18} />
-        </button>
+          <MoodSparkline data={moodData} />
+        </div>
+      )}
+
+      {crisisDetected && <CrisisBanner />}
+
+      <div className={styles.messages}>
+        {messages.map((msg, i) => (
+          <ChatBubble
+            key={i}
+            role={msg.role}
+            content={msg.content}
+            agentType={msg.agentType}
+          />
+        ))}
+        {loading && <TypingIndicator />}
+        <div ref={bottomRef} />
       </div>
+
+      <ChatInput
+        onSend={handleSend}
+        disabled={loading}
+        micSlot={
+          anonymousId ? (
+            <VoiceJournalButton
+              anonymousId={anonymousId}
+              disabled={loading}
+              onResult={(result) => {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "user" as const,
+                    content: `[Voice Journal] ${result.transcription}`,
+                  },
+                  {
+                    role: "assistant" as const,
+                    content: result.summary,
+                  },
+                ]);
+                if (result.crisisDetected) setCrisisDetected(true);
+              }}
+            />
+          ) : undefined
+        }
+      />
     </div>
   );
 }

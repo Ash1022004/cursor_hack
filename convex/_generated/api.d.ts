@@ -8,12 +8,15 @@
  * @module
  */
 
+import type * as adminAnalytics from "../adminAnalytics.js";
 import type * as adminCounsellors from "../adminCounsellors.js";
 import type * as agents_extraction from "../agents/extraction.js";
 import type * as agents_types from "../agents/types.js";
 import type * as chatbotNode from "../chatbotNode.js";
+import type * as commitments from "../commitments.js";
 import type * as counsellors from "../counsellors.js";
 import type * as dashboard from "../dashboard.js";
+import type * as doctorDashboard from "../doctorDashboard.js";
 import type * as doctorsNode from "../doctorsNode.js";
 import type * as guestAppointments from "../guestAppointments.js";
 import type * as helplines from "../helplines.js";
@@ -34,16 +37,27 @@ import type * as lib_anonymousId from "../lib/anonymousId.js";
 import type * as lib_apifyRest from "../lib/apifyRest.js";
 import type * as lib_chatAgentGraph from "../lib/chatAgentGraph.js";
 import type * as lib_chatTrace from "../lib/chatTrace.js";
+import type * as lib_embeddings from "../lib/embeddings.js";
 import type * as lib_hospitalMap from "../lib/hospitalMap.js";
 import type * as lib_llm from "../lib/llm.js";
 import type * as lib_search from "../lib/search.js";
 import type * as lib_staffAuth from "../lib/staffAuth.js";
+import type * as lib_symptomRag from "../lib/symptomRag.js";
+import type * as lib_symptomRules from "../lib/symptomRules.js";
+import type * as medicines from "../medicines.js";
+import type * as medicinesDb from "../medicinesDb.js";
+import type * as moodLogs from "../moodLogs.js";
 import type * as patientChat from "../patientChat.js";
 import type * as patients from "../patients.js";
+import type * as resources from "../resources.js";
+import type * as resourcesDb from "../resourcesDb.js";
 import type * as seed from "../seed.js";
 import type * as sessions from "../sessions.js";
 import type * as stickyNotes from "../stickyNotes.js";
+import type * as symptomCheckRag from "../symptomCheckRag.js";
 import type * as users from "../users.js";
+import type * as voiceJournals from "../voiceJournals.js";
+import type * as voiceJournalsDb from "../voiceJournalsDb.js";
 
 import type {
   ApiFromModules,
@@ -52,12 +66,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminAnalytics: typeof adminAnalytics;
   adminCounsellors: typeof adminCounsellors;
   "agents/extraction": typeof agents_extraction;
   "agents/types": typeof agents_types;
   chatbotNode: typeof chatbotNode;
+  commitments: typeof commitments;
   counsellors: typeof counsellors;
   dashboard: typeof dashboard;
+  doctorDashboard: typeof doctorDashboard;
   doctorsNode: typeof doctorsNode;
   guestAppointments: typeof guestAppointments;
   helplines: typeof helplines;
@@ -78,16 +95,27 @@ declare const fullApi: ApiFromModules<{
   "lib/apifyRest": typeof lib_apifyRest;
   "lib/chatAgentGraph": typeof lib_chatAgentGraph;
   "lib/chatTrace": typeof lib_chatTrace;
+  "lib/embeddings": typeof lib_embeddings;
   "lib/hospitalMap": typeof lib_hospitalMap;
   "lib/llm": typeof lib_llm;
   "lib/search": typeof lib_search;
   "lib/staffAuth": typeof lib_staffAuth;
+  "lib/symptomRag": typeof lib_symptomRag;
+  "lib/symptomRules": typeof lib_symptomRules;
+  medicines: typeof medicines;
+  medicinesDb: typeof medicinesDb;
+  moodLogs: typeof moodLogs;
   patientChat: typeof patientChat;
   patients: typeof patients;
+  resources: typeof resources;
+  resourcesDb: typeof resourcesDb;
   seed: typeof seed;
   sessions: typeof sessions;
   stickyNotes: typeof stickyNotes;
+  symptomCheckRag: typeof symptomCheckRag;
   users: typeof users;
+  voiceJournals: typeof voiceJournals;
+  voiceJournalsDb: typeof voiceJournalsDb;
 }>;
 
 /**

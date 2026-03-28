@@ -19,6 +19,7 @@ export interface ExtractedData {
   medications: string[];
   triggers: string[];
   copingPatterns: string[];
+  commitments: string[];
   phqHint?: number;
   crisisSignal: boolean;
   dominantEmotion: string;

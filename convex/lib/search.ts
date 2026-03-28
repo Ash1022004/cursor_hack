@@ -131,6 +131,79 @@ export async function apifyWebSearch(query: string): Promise<SearchSnippet[]> {
 }
 
 /**
+ * Search for local events, meetups, and support groups near a location.
+ */
+export async function searchLocalEvents(
+  query: string,
+  location: string
+): Promise<SearchSnippet[]> {
+  const exaKey = process.env.EXA_API_KEY;
+  const apifyKey = process.env.APIFY_API_KEY?.trim();
+
+  const exaPromise = (async (): Promise<SearchSnippet[]> => {
+    if (!exaKey) return [];
+    const exa = new Exa(exaKey);
+    try {
+      const results = await exa.searchAndContents(
+        `${query} events meetups community near ${location}`,
+        {
+          numResults: 4,
+          highlights: true,
+          includeDomains: [
+            "meetup.com",
+            "eventbrite.com",
+            "facebook.com",
+            "allevents.in",
+            "insider.in",
+          ],
+        }
+      );
+      type ExaRow = {
+        title?: string | null;
+        url?: string;
+        highlights?: string[];
+        text?: string;
+      };
+      return (results.results ?? []).map((r): SearchSnippet => {
+        const row = r as unknown as ExaRow;
+        const highlight =
+          row.highlights && typeof row.highlights[0] === "string"
+            ? row.highlights[0]
+            : "";
+        return {
+          source: "exa",
+          title: row.title ?? row.url ?? "event",
+          url: row.url ?? "",
+          text:
+            highlight ||
+            (typeof row.text === "string" ? row.text.slice(0, 400) : "") ||
+            "",
+        };
+      });
+    } catch {
+      return [];
+    }
+  })();
+
+  const apifyPromise = (async (): Promise<SearchSnippet[]> => {
+    if (!apifyKey) return [];
+    try {
+      return await apifyWebSearch(
+        `community events ${location} mental health support groups meetups`
+      );
+    } catch {
+      return [];
+    }
+  })();
+
+  const [exaResults, apifyResults] = await Promise.all([
+    exaPromise,
+    apifyPromise,
+  ]);
+  return dedupeByUrl([...exaResults, ...apifyResults]).slice(0, 6);
+}
+
+/**
  * Parallel Exa + Apify, merged and deduped for agent RAG context.
  */
 export async function searchResources(

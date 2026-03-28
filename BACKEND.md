@@ -10,7 +10,7 @@ This document maps **HTTP endpoints**, **Convex functions** (queries, mutations,
 |--------|------|
 | **Convex HTTP router** (`convex/http.ts`) | REST-style routes for auth, sticky notes, JWT chat, admin, health. |
 | **Convex functions** | Data + business logic: `query` / `mutation` for DB; `action` for Node + LLM. |
-| **Next.js Route Handlers** (`src/app/api/**`) | Appointments proxy to Convex; symptom/medicine tools run in Next (no Convex). |
+| **Next.js Route Handlers** (`src/app/api/**`) | Appointments proxy to Convex; health tools call Convex actions/queries when `NEXT_PUBLIC_CONVEX_URL` is set (fallbacks documented per route). |
 
 Auth for HTTP: `Authorization: Bearer <JWT>` where JWT is issued by Convex `jwtNode.signJwt` after email/password login.
 
@@ -103,8 +103,18 @@ These are exported from Convex modules and callable via `api.*` (not `internal.*
 | `adminCounsellors` | `deleteCounsellor` | mutation | Remove counsellor doc. |
 | `adminCounsellors` | `createCounsellor` | **action** | Create with optional search indexing (see module). |
 | `adminCounsellors` | `updateCounsellor` | **action** | Update + optional search. |
+| `symptomCheckRag` | `runRag` | **action** | Symptom check with query-time RAG (Exa + embeddings + Gemini). |
+| `medicines` | `explain` | **action** | Hybrid medicine info: DB search then Exa + Gemini synthesis. |
+| `medicinesDb` | `searchMedicinesPublic` | query | Search curated `medicines` table (search index + substring fallback). |
+| `medicinesDb` | `matchBestMedicine` | query | Best match for vision-extracted name (verify flow). |
 
-**Internal-only** helpers (HTTP/actions call these): `users.*`, `sessions.*`, `patients.*`, `stickyNotes.*`, `jwtNode.*`, `patientChat.runTurn`, `chatbotNode.chatbotHealth`, `seed.*`, `helplines.seedHelplinesOnce`.
+**Internal-only** helpers (HTTP/actions call these): `users.*`, `sessions.*`, `patients.*`, `stickyNotes.*`, `jwtNode.*`, `patientChat.runTurn`, `chatbotNode.chatbotHealth`, `seed.*`, `helplines.seedHelplinesOnce`, `medicinesDb.seedBatch` (CLI seed from JSON).
+
+### Health tools data (`medicines` table)
+
+- **Schema:** `convex/schema.ts` — `medicines` with `searchBlob` + `searchIndex("search_medicine")`, `by_name_normalized`.
+- **Seed:** `npm run convex:seed-medicines` (runs `scripts/seed-medicines.mjs` → `internal/medicinesDb:seedBatch` with `data/medicines.json`).
+- **Apify imports:** batch objects must match `medicineFields` in `convex/medicinesDb.ts` (`name`, `genericNames`, `uses`, `dosage`, `sideEffects`, `precautions`, optional `source`); run the same internal mutation with your JSON payload.
 
 ---
 
@@ -115,9 +125,9 @@ Served on the Next.js app origin (e.g. `http://localhost:3000/api/...`).
 | Route | Methods | Implementation |
 |-------|---------|----------------|
 | `/api/appointments` | `GET`, `POST` | `ConvexHttpClient` → `api.guestAppointments.listRecent` / `createGuest`. |
-| `/api/symptom-check` | `POST` | `runSymptomCheck` in `@/lib/symptomCheck` (local logic + disclaimer). |
-| `/api/medicines` | `GET` | Query `q` → `searchMedicines` on local dataset. |
-| `/api/verify-medicine` | `POST` | Multipart `image` → Tesseract OCR → `matchMedicineFromText`. |
+| `/api/symptom-check` | `POST` | `ConvexHttpClient.action` → `api.symptomCheckRag.runRag` (Exa retrieval + chunk/embed + Gemini JSON + sources); on failure or no Convex URL → `runSymptomCheck` in `@/lib/symptomCheck`. |
+| `/api/medicines` | `GET` | `?q=` → `ConvexHttpClient.action` → `api.medicines.explain` (Convex `medicines` table, else Exa + Gemini); fallback → `data/medicines.json`. |
+| `/api/verify-medicine` | `POST` | Multipart `image` → Gemini Vision (`@/lib/verifyMedicineVision`) → `api.medicinesDb.matchBestMedicine` + expiry parse → `verified` / `not_found` / `expired`. Requires `GEMINI_API_KEY` in **Next** env. |
 
 ---
 

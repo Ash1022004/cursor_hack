@@ -6,13 +6,25 @@ import Layout from "@/components/layout/Layout";
 import { Pill, Upload, AlertTriangle, ImageIcon } from "lucide-react";
 import styles from "@/styles/pages/VerifyMedicine.module.css";
 
+type VisionExtracted = {
+  medicine_name: string | null;
+  strength_or_dosage: string | null;
+  expiry_date: string | null;
+  manufacturer: string | null;
+  confidence: number;
+};
+
 export default function VerifyMedicinePage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [detected, setDetected] = useState<string | null>(null);
+  const [status, setStatus] = useState<"verified" | "not_found" | "expired" | null>(
+    null
+  );
+  const [extracted, setExtracted] = useState<VisionExtracted | null>(null);
+  const [expiryIso, setExpiryIso] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [info, setInfo] = useState<Record<string, string> | null>(null);
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
@@ -32,7 +44,9 @@ export default function VerifyMedicinePage() {
       if (file && file.type.startsWith("image/")) {
         setPreviewUrl(URL.createObjectURL(file));
       }
-      setDetected(null);
+      setStatus(null);
+      setExtracted(null);
+      setExpiryIso(null);
       setName(null);
       setInfo(null);
       setDisclaimer(null);
@@ -65,7 +79,9 @@ export default function VerifyMedicinePage() {
     if (!selectedFile) return;
     setLoading(true);
     setError(null);
-    setDetected(null);
+    setStatus(null);
+    setExtracted(null);
+    setExpiryIso(null);
     setName(null);
     setInfo(null);
     setDisclaimer(null);
@@ -78,7 +94,18 @@ export default function VerifyMedicinePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Verification failed");
-      setDetected(typeof data.detected_text === "string" ? data.detected_text : "");
+      const st = data.status;
+      if (st === "verified" || st === "not_found" || st === "expired") {
+        setStatus(st);
+      } else {
+        setStatus(null);
+      }
+      if (data.extracted && typeof data.extracted === "object") {
+        setExtracted(data.extracted as VisionExtracted);
+      } else {
+        setExtracted(null);
+      }
+      setExpiryIso(typeof data.expiry_parsed_iso === "string" ? data.expiry_parsed_iso : null);
       setName(typeof data.medicine_name === "string" ? data.medicine_name : null);
       setInfo(
         data.basic_info && typeof data.basic_info === "object"
@@ -187,10 +214,40 @@ export default function VerifyMedicinePage() {
         <div className={styles.results}>
           {error && <p className={`${styles.errorText} ${styles.resultText}`}>{error}</p>}
 
-          {detected !== null && !loading && (
+          {status && !loading && (
             <div className={styles.resultCard}>
-              <h2 className={styles.resultTitle}>Detected text</h2>
-              <pre className={styles.resultText}>{detected}</pre>
+              <h2 className={styles.resultTitle}>Status</h2>
+              <p className={styles.resultText}>
+                {status === "verified" && "Verified — label matches our reference database and expiry is not past."}
+                {status === "not_found" && "Not found — could not match to our reference database."}
+                {status === "expired" && "Expired — parsed expiry date is in the past."}
+              </p>
+            </div>
+          )}
+
+          {extracted && !loading && (
+            <div className={styles.resultCard}>
+              <h2 className={styles.resultTitle}>From label (vision)</h2>
+              <p className={styles.resultText}>
+                <strong>Name:</strong> {extracted.medicine_name ?? "—"}
+              </p>
+              <p className={styles.resultText}>
+                <strong>Strength:</strong> {extracted.strength_or_dosage ?? "—"}
+              </p>
+              <p className={styles.resultText}>
+                <strong>Expiry (printed):</strong> {extracted.expiry_date ?? "—"}
+              </p>
+              {expiryIso && (
+                <p className={styles.resultText}>
+                  <strong>Expiry (parsed):</strong> {expiryIso}
+                </p>
+              )}
+              <p className={styles.resultText}>
+                <strong>Manufacturer:</strong> {extracted.manufacturer ?? "—"}
+              </p>
+              <p className={styles.resultText}>
+                <strong>Confidence:</strong> {Math.round(extracted.confidence * 100)}%
+              </p>
             </div>
           )}
 

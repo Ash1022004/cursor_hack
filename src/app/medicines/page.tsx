@@ -18,6 +18,11 @@ export default function MedicinesPage() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Med[]>([]);
+  const [fromCache, setFromCache] = useState<boolean | null>(null);
+  const [liveSources, setLiveSources] = useState<{ title: string; url: string }[]>(
+    []
+  );
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,11 +30,21 @@ export default function MedicinesPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setInfoMessage(null);
+    setFromCache(null);
+    setLiveSources([]);
     try {
       const res = await fetch(`/api/medicines?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Search failed");
       setResults((data.results as Med[]) || []);
+      setFromCache(typeof data.fromCache === "boolean" ? data.fromCache : null);
+      setLiveSources(
+        Array.isArray(data.sources)
+          ? (data.sources as { title: string; url: string }[])
+          : []
+      );
+      setInfoMessage(typeof data.message === "string" ? data.message : null);
       setDisclaimer(typeof data.disclaimer === "string" ? data.disclaimer : null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -78,6 +93,38 @@ export default function MedicinesPage() {
               </form>
 
               {error && <p className={`${styles.faqAnswer} ${styles.healthError}`}>{error}</p>}
+
+              {fromCache !== null && (
+                <p className={`${styles.faqAnswer} ${styles.healthMeta}`}>
+                  {fromCache
+                    ? "From curated database (fast lookup)"
+                    : "Synthesized from live web sources"}
+                </p>
+              )}
+
+              {infoMessage && results.length === 0 && (
+                <p className={styles.faqAnswer}>{infoMessage}</p>
+              )}
+
+              {liveSources.length > 0 && (
+                <div className={styles.faqItem}>
+                  <h3 className={styles.faqQuestion}>References</h3>
+                  <ul className={styles.faqAnswer}>
+                    {liveSources.map((s) => (
+                      <li key={s.url}>
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.healthBackLink}
+                        >
+                          {s.title || s.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {results.length > 0 && (
                 <div className={`${styles.faqGrid} ${styles.healthResultSection}`}>

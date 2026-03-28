@@ -111,4 +111,54 @@ export default defineSchema({
     institution: v.string(),
     available: v.boolean(),
   }).index("by_clerkUserId", ["clerkUserId"]),
+
+  resources: defineTable({
+    topic: v.string(),
+    title: v.string(),
+    url: v.string(),
+    snippet: v.string(),
+    source: v.string(),
+    language: v.string(),
+    tags: v.array(v.string()),
+    fetchedAt: v.number(),
+  })
+    .index("by_topic", ["topic"])
+    .index("by_url", ["url"]),
+
+  voiceJournals: defineTable({
+    patientId: v.id("patients"),
+    storageId: v.id("_storage"),
+    transcription: v.optional(v.string()),
+    summary: v.optional(v.string()),
+    moodScore: v.optional(v.number()),
+    emotion: v.optional(v.string()),
+    duration: v.number(),
+    createdAt: v.number(),
+  }).index("by_patientId", ["patientId"]),
+
+  commitments: defineTable({
+    patientId: v.id("patients"),
+    text: v.string(),
+    detectedAt: v.number(),
+    followedUpAt: v.optional(v.number()),
+    status: v.string(), // "pending" | "followed_up" | "completed"
+  }).index("by_patientId", ["patientId"]),
+
+  /** Curated medicine monographs (Apify/seed); hybrid lookup with Exa fallback. */
+  medicines: defineTable({
+    name: v.string(),
+    nameNormalized: v.string(),
+    genericNames: v.array(v.string()),
+    uses: v.string(),
+    dosage: v.string(),
+    sideEffects: v.string(),
+    precautions: v.string(),
+    source: v.optional(v.string()),
+    updatedAt: v.number(),
+    searchBlob: v.string(),
+  })
+    .index("by_name_normalized", ["nameNormalized"])
+    .searchIndex("search_medicine", {
+      searchField: "searchBlob",
+    }),
 });

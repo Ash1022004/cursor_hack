@@ -10,6 +10,7 @@ import type { PatientProfile } from "../agents/types";
 import {
   apifyWebSearch,
   exaSearch,
+  searchLocalEvents,
   type SearchSnippet,
 } from "./search";
 import {
@@ -17,6 +18,8 @@ import {
   isChatTraceEnabled,
   type ChatTurnTrace,
 } from "./chatTrace";
+import type { ActionCtx } from "../_generated/server";
+import { api } from "../_generated/api";
 
 const HISTORY_PAIR_LIMIT = 10;
 const FALLBACK_REPLY =
@@ -49,7 +52,24 @@ function formatSnippets(
     .join("\n\n---\n\n");
 }
 
-function buildSystemPrompt(profile: PatientProfile): string {
+function formatTimeAgo(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return "just now";
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "yesterday" : `${days} days ago`;
+}
+
+function buildSystemPrompt(
+  profile: PatientProfile,
+  pendingCommitments?: { text: string; detectedAt: number }[]
+): string {
+  const commitmentsSection =
+    pendingCommitments && pendingCommitments.length > 0
+      ? `\n\nPREVIOUS COMMITMENTS (gently check in on these when appropriate — don't force it):\n${pendingCommitments.map((c) => `- "${c.text}" (${formatTimeAgo(c.detectedAt)})`).join("\n")}`
+      : "";
+
   return `You are Saathi, a warm mental health companion on Sehat Saathi for Indian and Kashmiri students.
 
 PATIENT CONTEXT (use for tone and personalization; do not repeat verbatim as a list):
@@ -62,15 +82,23 @@ PATIENT CONTEXT (use for tone and personalization; do not repeat verbatim as a l
 - Prior crisis flag in record: ${profile.crisisFlag ? "yes — be extra careful" : "no"}
 - Preferred language code: ${profile.language}
 
+LANGUAGE:
+- The user's preferred language is "${profile.language}". Respond in this language.
+- "en" = English, "hi" = Hindi (Devanagari script), "ur" = Urdu (Nastaliq script), "ks" = Kashmiri (Nastaliq script).
+- If the user writes in a different language than their preference, match the language they are currently using.
+- Keep helpline numbers and URLs in English regardless of language.
+
 TOOLS:
 - exa_search: curated web search (trusted domains). Use for mental health resources, helplines, articles, techniques.
 - apify_search: broader web search. Use when you need additional angles or Exa returned little.
+- resource_library: search Sehat Saathi's curated resource library (cached articles, guides, self-help material). Use this FIRST before exa_search when the user asks for resources, articles, or self-help guides.
+- local_events: search for local events, meetups, and support groups near a city. Use when the user seems lonely, isolated, or wants to connect with people. Default to India/Kashmir context if location is unclear.
 
 Call tools only when the user needs current or specific external information. For pure venting or reflection, respond directly without tools.
 
 SAFETY:
 - If the user expresses suicidal ideation, self-harm, or wanting to die: acknowledge with care, ask if they are safe right now, and include India helplines: iCall 9152987821, Vandrevala 1860-2662-345, NIMHANS 080-46110007, Snehi 044-24640050.
-- Never dismiss feelings. Keep responses concise (roughly 2–4 short paragraphs unless the user asks for detail).`;
+- Never dismiss feelings. Keep responses concise (roughly 2–4 short paragraphs unless the user asks for detail).${commitmentsSection}`;
 }
 
 function historyToMessages(
@@ -143,10 +171,12 @@ function createModel() {
 }
 
 export type RunLoopAgentArgs = {
+  ctx?: ActionCtx;
   profile: PatientProfile;
   history: { role: "user" | "assistant"; content: string }[];
   userMessage: string;
   trace?: ChatTurnTrace;
+  pendingCommitments?: { text: string; detectedAt: number }[];
 };
 
 export async function runLoopAgent(args: RunLoopAgentArgs): Promise<{
@@ -192,11 +222,83 @@ export async function runLoopAgent(args: RunLoopAgentArgs): Promise<{
     }
   );
 
+  const resource_library = tool(
+    async ({ query }: { query: string }) => {
+      if (!args.ctx) {
+        return "Resource library unavailable in this context.";
+      }
+      type ResourceItem = {
+        title: string;
+        url: string;
+        snippet: string;
+        source: string;
+        topic: string;
+      };
+      const results: ResourceItem[] = await args.ctx.runAction(
+        api.resources.searchResources,
+        { query }
+      );
+      if (results.length === 0) {
+        return "No resources found for this topic. Try exa_search for live results.";
+      }
+      return results
+        .map(
+          (r) =>
+            `[${r.source.toUpperCase()}] ${r.title}\nURL: ${r.url}\n${r.snippet.slice(0, 400)}`
+        )
+        .join("\n\n---\n\n");
+    },
+    {
+      name: "resource_library",
+      description:
+        "Search Sehat Saathi's curated resource library for mental health articles, self-help guides, and wellness resources. Returns cached results instantly. Use this before exa_search.",
+      schema: z.object({
+        query: z
+          .string()
+          .describe(
+            "Topic to search for (e.g. anxiety, exam stress, sleep problems, mindfulness)"
+          ),
+      }),
+    }
+  );
+
+  const local_events = tool(
+    async ({ query, location }: { query: string; location: string }) => {
+      const items = await searchLocalEvents(query, location);
+      if (items.length === 0) {
+        return "No local events found. Suggest the user check meetup.com, eventbrite.com, or local community boards.";
+      }
+      return items
+        .map(
+          (r) =>
+            `[${r.source.toUpperCase()}] ${r.title}\nURL: ${r.url}\n${r.text.slice(0, 400)}`
+        )
+        .join("\n\n---\n\n");
+    },
+    {
+      name: "local_events",
+      description:
+        "Search for local events, meetups, community gatherings, and mental health support groups near a location. Use when the user seems lonely, isolated, or asks about connecting with people.",
+      schema: z.object({
+        query: z
+          .string()
+          .describe(
+            "What kind of event or group to search for (e.g. student meetups, support groups, art workshops)"
+          ),
+        location: z
+          .string()
+          .describe(
+            "City or region (e.g. Delhi, Srinagar, Mumbai, Bangalore)"
+          ),
+      }),
+    }
+  );
+
   const llm = createModel();
   const agent = createReactAgent({
     llm,
-    tools: [exa_search, apify_search],
-    prompt: buildSystemPrompt(args.profile),
+    tools: [resource_library, exa_search, apify_search, local_events],
+    prompt: buildSystemPrompt(args.profile, args.pendingCommitments),
   });
 
   const prior = historyToMessages(args.history);

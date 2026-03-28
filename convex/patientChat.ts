@@ -127,16 +127,24 @@ async function executeTurn(
     language: patient.language,
   };
 
+  // Fetch pending commitments for follow-up injection
+  const pendingCommitments: { text: string; detectedAt: number }[] =
+    await ctx.runQuery(internal.commitments.getPendingForPatient, {
+      patientId: patient._id,
+    });
+
   if (traceEnabled) {
     chatTrace("parallel_phase_start", { turnId });
   }
 
   const [{ text: assistantText }, extracted] = await Promise.all([
     runLoopAgent({
+      ctx,
       profile,
       history,
       userMessage: args.message,
       trace,
+      pendingCommitments,
     }),
     extractFromMessage(args.message, trace),
   ]);
@@ -188,6 +196,7 @@ async function executeTurn(
     medications: extracted.medications,
     triggers: extracted.triggers,
     copingPatterns: extracted.copingPatterns,
+    commitments: extracted.commitments,
     crisisSignal: extracted.crisisSignal,
     moodScore: extracted.moodScore,
     dominantEmotion: extracted.dominantEmotion,

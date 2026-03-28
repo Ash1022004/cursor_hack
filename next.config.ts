@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const convexSite = process.env.CONVEX_SITE_URL;
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["tesseract.js"],
   turbopack: {
     root: __dirname,
   },

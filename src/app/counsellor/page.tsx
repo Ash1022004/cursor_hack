@@ -1,17 +1,12 @@
 "use client";
 
-import React from 'react';
-import CounsellorLayout from '@/components/counsellor/CounsellorLayout';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-const CounsellorDashboardPage: React.FC = () => {
-  return (
-    <CounsellorLayout title="Counsellor Dashboard - Sehat-Saathi" description="Counsellor portal">
-      <div style={{ display: 'grid', gap: 16 }}>
-        <h1 style={{ margin: 0 }}>Counsellor Dashboard</h1>
-        <p>This is a dummy counsellor dashboard page. Restrict access to users with role = counsellor.</p>
-      </div>
-    </CounsellorLayout>
-  );
-};
-
-export default CounsellorDashboardPage;
+export default function CounsellorRedirectPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/doctor");
+  }, [router]);
+  return <div style={{ padding: 24, textAlign: "center" }}>Redirecting to doctor dashboard...</div>;
+}

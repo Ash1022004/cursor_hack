@@ -11,7 +11,8 @@ export type SymptomCheckResult = {
   possible_conditions: string[];
   suggested_medicines: { generic: string; note: string }[];
   advice: string;
-  source: "openai" | "rules";
+  source: "openai" | "rules" | "rag";
+  sources?: { title: string; url: string }[];
   disclaimer: string;
 };
 
@@ -167,6 +168,7 @@ function ruleBasedCheck(input: SymptomCheckInput): SymptomCheckResult {
       advice:
         "Keep a symptom diary and seek in-person evaluation if symptoms worsen, persist, or are severe.",
       source: "rules",
+      sources: [],
       disclaimer: MEDICAL_DISCLAIMER,
     };
   }
@@ -184,6 +186,7 @@ function ruleBasedCheck(input: SymptomCheckInput): SymptomCheckResult {
     suggested_medicines: generics.slice(0, 6),
     advice: [...new Set(adviceParts)].join(" "),
     source: "rules",
+    sources: [],
     disclaimer: MEDICAL_DISCLAIMER,
   };
 }
@@ -249,6 +252,7 @@ Duration: ${input.duration}`,
         : [],
       advice: typeof parsed.advice === "string" ? parsed.advice : "",
       source: "openai",
+      sources: [],
       disclaimer: MEDICAL_DISCLAIMER,
     };
   } catch {

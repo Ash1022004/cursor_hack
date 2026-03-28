@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Users, Settings, Home } from 'lucide-react';
+import { Shield, Users, Home, UserCheck, Calendar } from 'lucide-react';
 
 const itemStyle: React.CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '10px 12px', borderRadius: 8, color: '#0f172a', textDecoration: 'none' };
 const activeStyle: React.CSSProperties = { background: '#eef2ff', color: '#1d4ed8' };
@@ -20,12 +20,15 @@ const AdminSidebar: React.FC = () => {
         <Link href="/admin" style={{ ...itemStyle, ...(isActive('/admin') ? activeStyle : {}) }}>
           <Home size={16} /> Dashboard
         </Link>
+        <Link href="/admin/patients" style={{ ...itemStyle, ...(isActive('/admin/patients') ? activeStyle : {}) }}>
+          <UserCheck size={16} /> Patients
+        </Link>
         <Link href="/admin/counsellors" style={{ ...itemStyle, ...(isActive('/admin/counsellors') ? activeStyle : {}) }}>
           <Users size={16} /> Counsellors
         </Link>
-        <a href="#" style={itemStyle} onClick={(e) => e.preventDefault()}>
-          <Settings size={16} /> Settings (coming soon)
-        </a>
+        <Link href="/admin/appointments" style={{ ...itemStyle, ...(isActive('/admin/appointments') ? activeStyle : {}) }}>
+          <Calendar size={16} /> Appointments
+        </Link>
       </nav>
     </aside>
   );

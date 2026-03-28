@@ -145,7 +145,33 @@ export default function SymptomCheckPage() {
                     <h3 className={styles.faqQuestion}>Advice</h3>
                     <p className={styles.faqAnswer}>{String(result.advice)}</p>
                   </div>
+                  {Array.isArray(result.sources) && result.sources.length > 0 && (
+                    <div className={styles.faqItem}>
+                      <h3 className={styles.faqQuestion}>Sources (retrieved)</h3>
+                      <ul className={styles.faqAnswer}>
+                        {(result.sources as { title?: string; url?: string }[]).map(
+                          (s) => (
+                            <li key={s.url}>
+                              <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.healthBackLink}
+                              >
+                                {s.title || s.url}
+                              </a>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
                   <div className={styles.faqItem}>
+                    <p className={styles.faqAnswer}>
+                      <span className={styles.healthMeta}>
+                        Source mode: {String(result.source ?? "unknown")}
+                      </span>
+                    </p>
                     <p className={styles.faqAnswer}>{String(result.disclaimer)}</p>
                   </div>
                 </div>

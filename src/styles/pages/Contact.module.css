@@ -74,6 +74,11 @@
   margin-top: var(--spacing-xl);
 }
 
+.healthMeta {
+  font-size: 0.875rem;
+  opacity: 0.85;
+}
+
 .healthError {
   margin-top: var(--spacing-md);
   color: var(--gray-800);

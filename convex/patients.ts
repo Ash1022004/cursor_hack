@@ -16,7 +16,9 @@ export const getOrCreatePatient = mutation({
       .withIndex("by_anonymousId", (q) => q.eq("anonymousId", anonymousId))
       .first();
     if (existing) {
-      await ctx.db.patch(existing._id, { lastSeen: Date.now() });
+      const patch: Record<string, unknown> = { lastSeen: Date.now() };
+      if (language) patch.language = language;
+      await ctx.db.patch(existing._id, patch);
       return existing._id;
     }
     const id = await ctx.db.insert("patients", {
@@ -84,6 +86,7 @@ export const updateFromExtraction = internalMutation({
     medications: v.array(v.string()),
     triggers: v.array(v.string()),
     copingPatterns: v.array(v.string()),
+    commitments: v.optional(v.array(v.string())),
     crisisSignal: v.boolean(),
     moodScore: v.number(),
     dominantEmotion: v.optional(v.string()),
@@ -104,19 +107,8 @@ export const updateFromExtraction = internalMutation({
       lastSeen: Date.now(),
     });
 
-    const notableMood =
-      args.crisisSignal ||
-      args.moodScore <= 3 ||
-      args.moodScore >= 8 ||
-      (args.dominantEmotion &&
-        !["neutral", "inferred"].includes(
-          args.dominantEmotion.toLowerCase()
-        ));
-    if (
-      notableMood &&
-      args.moodScore >= 1 &&
-      args.moodScore <= 10
-    ) {
+    // Always log mood for every message to power the sparkline chart
+    if (args.moodScore >= 1 && args.moodScore <= 10) {
       await ctx.db.insert("moodLogs", {
         patientId: args.patientId,
         score: args.moodScore,
@@ -124,6 +116,19 @@ export const updateFromExtraction = internalMutation({
         triggers: args.triggers,
         date: Date.now(),
       });
+    }
+
+    // Save commitments
+    if (args.commitments && args.commitments.length > 0) {
+      const now = Date.now();
+      for (const text of args.commitments) {
+        await ctx.db.insert("commitments", {
+          patientId: args.patientId,
+          text,
+          detectedAt: now,
+          status: "pending",
+        });
+      }
     }
   },
 });

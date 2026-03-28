@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
@@ -9,9 +10,10 @@ import styles from "@/styles/components/saathi-chat.module.css";
 interface Props {
   onSend: (text: string) => void;
   disabled?: boolean;
+  micSlot?: ReactNode;
 }
 
-export default function ChatInput({ onSend, disabled }: Props) {
+export default function ChatInput({ onSend, disabled, micSlot }: Props) {
   const [text, setText] = useState("");
 
   const handleSend = () => {
@@ -39,6 +41,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
             disabled={disabled}
           />
         </div>
+        {micSlot}
         <RippleSurface className={styles.sendRipple} disabled={disabled || !text.trim()}>
           <motion.button
             type="button"

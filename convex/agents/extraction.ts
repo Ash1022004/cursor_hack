@@ -15,6 +15,7 @@ const extractionSchema = z.object({
   medications: z.array(z.string()).default([]),
   triggers: z.array(z.string()).default([]),
   copingPatterns: z.array(z.string()).default([]),
+  commitments: z.array(z.string()).default([]),
   phqHint: z.number().min(0).max(3).optional().nullable(),
   crisisSignal: z.boolean().default(false),
   dominantEmotion: z.string().default("neutral"),
@@ -30,6 +31,7 @@ Return ONLY valid JSON matching this schema exactly:
   "medications": [],
   "triggers": [],
   "copingPatterns": [],
+  "commitments": [],
   "phqHint": null,
   "crisisSignal": false,
   "dominantEmotion": "",
@@ -40,6 +42,7 @@ Rules:
 - Be conservative — only extract what is actually present
 - Empty arrays if nothing detected
 - moodScore 1-10 from tone
+- commitments: extract self-improvement promises/intentions (e.g. "I'll try to meditate", "I want to sleep earlier", "I'm going to exercise more"). Only clear personal commitments, not vague statements.
 `;
 
 function logExtraction(
@@ -75,6 +78,7 @@ export async function extractFromMessage(
       medications: [],
       triggers: [],
       copingPatterns: [],
+      commitments: [],
       crisisSignal: false,
       dominantEmotion: "neutral",
       moodScore: 5,
@@ -88,6 +92,7 @@ export async function extractFromMessage(
       medications: [],
       triggers: [],
       copingPatterns: [],
+      commitments: [],
       crisisSignal: false,
       dominantEmotion: "neutral",
       moodScore: 5,
@@ -117,6 +122,7 @@ export async function extractFromMessage(
     medications: d.medications,
     triggers: d.triggers,
     copingPatterns: d.copingPatterns,
+    commitments: d.commitments,
     phqHint: d.phqHint ?? undefined,
     crisisSignal: d.crisisSignal,
     dominantEmotion: d.dominantEmotion,
