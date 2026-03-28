@@ -125,7 +125,6 @@
 }
 
 .chatLayoutFull {
-  composes: chatLayout;
   flex: 1;
   min-height: 0;
   grid-template-columns: minmax(220px, 280px) 1fr;
@@ -226,7 +225,7 @@
 }
 
 .panelDrawer {
-  composes: panel;
+  background: var(--white, #fff);
   border: none;
   border-radius: 0;
   padding: 0;
