@@ -2,11 +2,91 @@
   min-height: 100vh;
 }
 
+/* Dark: Health Tools–style ambient shell site-wide */
+[data-theme="dark"] .about {
+  background: linear-gradient(
+    180deg,
+    #0f172a 0%,
+    #0a1f1d 24%,
+    #064e3b 48%,
+    #1e293b 74%,
+    #0f172a 100%
+  );
+  background-size: 100% 320%;
+  animation: aboutShellDarkShift 26s ease-in-out infinite;
+}
+
+@keyframes aboutShellDarkShift {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .about {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+/* Light: same mint/teal diagonal as home Hero (reference — Hero.module.css unchanged) */
 .hero {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
-  color: white;
+  background: linear-gradient(
+    135deg,
+    var(--primary-100) 0%,
+    var(--secondary-200) 38%,
+    var(--primary-200) 72%,
+    var(--primary-50) 100%
+  );
+  background-size: 200% 200%;
+  animation: aboutHeroMintShift 18s ease-in-out infinite;
+  color: var(--gray-900);
   padding: var(--spacing-3xl) 0;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes aboutHeroMintShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+[data-theme="dark"] .hero {
+  background: linear-gradient(135deg, #0f172a 0%, #022c22 45%, #047857 100%);
+  background-size: 220% 220%;
+  animation: aboutHeroDarkShift 22s ease-in-out infinite;
+  color: #f8fafc;
+}
+
+@keyframes aboutHeroDarkShift {
+  0%, 100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 55%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .hero {
+    animation: none;
+    background-size: 100% 100%;
+  }
 }
 
 .container {
@@ -25,17 +105,33 @@
   font-weight: 800;
   margin-bottom: var(--spacing-lg);
   line-height: 1.2;
+  color: var(--gray-900);
 }
 
 .heroSubtitle {
   font-size: 1.25rem;
   line-height: 1.6;
-  opacity: 0.9;
+  color: var(--gray-600);
+  opacity: 1;
+}
+
+[data-theme="dark"] .heroTitle {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .heroSubtitle {
+  color: #cbd5e1;
+  opacity: 1;
 }
 
 .mission {
   padding: var(--spacing-3xl) 0;
   background: var(--card-bg);
+}
+
+[data-theme="dark"] .mission {
+  background: rgba(30, 41, 59, 0.45);
+  backdrop-filter: blur(8px);
 }
 
 .missionContent {
@@ -60,7 +156,12 @@
 
 .values {
   padding: var(--spacing-3xl) 0;
-  background: var(--gray-50);
+  background: linear-gradient(180deg, rgba(236, 253, 245, 0.45) 0%, var(--gray-50) 100%);
+}
+
+[data-theme="dark"] .values {
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(6px);
 }
 
 .valuesHeader {
@@ -122,8 +223,61 @@
 
 .stats {
   padding: var(--spacing-3xl) 0;
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
-  color: white;
+  background: linear-gradient(
+    135deg,
+    var(--primary-100) 0%,
+    var(--secondary-100) 42%,
+    var(--primary-200) 100%
+  );
+  background-size: 200% 200%;
+  animation: aboutStatsMintShift 22s ease-in-out infinite;
+  color: var(--gray-900);
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes aboutStatsMintShift {
+  0%, 100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 55%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+[data-theme="dark"] .stats {
+  background: linear-gradient(
+    165deg,
+    rgba(15, 23, 42, 0.75) 0%,
+    rgba(6, 78, 59, 0.42) 42%,
+    rgba(30, 41, 59, 0.82) 100%
+  );
+  background-size: 200% 200%;
+  animation: aboutStatsDarkShift 20s ease-in-out infinite;
+  color: #f8fafc;
+}
+
+@keyframes aboutStatsDarkShift {
+  0%, 100% {
+    background-position: 0% 30%;
+  }
+  50% {
+    background-position: 100% 70%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .stats {
+    animation: none;
+    background-size: 100% 100%;
+  }
 }
 
 .statsGrid {
@@ -143,16 +297,32 @@
   font-size: 3rem;
   font-weight: 800;
   line-height: 1;
+  color: var(--primary-700);
 }
 
 .statLabel {
   font-size: 1.125rem;
-  opacity: 0.9;
+  color: var(--gray-700);
+  opacity: 1;
+}
+
+[data-theme="dark"] .statNumber {
+  color: #ecfdf5;
+}
+
+[data-theme="dark"] .statLabel {
+  color: #cbd5e1;
+  opacity: 1;
 }
 
 .team {
   padding: var(--spacing-3xl) 0;
   background: var(--card-bg);
+}
+
+[data-theme="dark"] .team {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(8px);
 }
 
 .teamHeader {

@@ -2,11 +2,106 @@
   min-height: 100vh;
 }
 
+/* Dark: same ambient shell as Health Tools (full page) */
+[data-theme="dark"] .contact {
+  background: linear-gradient(
+    180deg,
+    #0f172a 0%,
+    #0a1f1d 24%,
+    #064e3b 48%,
+    #1e293b 74%,
+    #0f172a 100%
+  );
+  background-size: 100% 320%;
+  animation: healthFlowBgShift 26s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .contact {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+/* Light: match home Hero mint/teal diagonal (Hero.module.css — do not edit that file) */
 .hero {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
-  color: white;
+  background: linear-gradient(
+    135deg,
+    var(--primary-100) 0%,
+    var(--secondary-200) 38%,
+    var(--primary-200) 72%,
+    var(--primary-50) 100%
+  );
+  background-size: 200% 200%;
+  animation: contactHeroMintShift 18s ease-in-out infinite;
+  color: var(--gray-900);
   padding: var(--spacing-3xl) 0;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes contactHeroMintShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.2;
+  color: var(--gray-900);
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--gray-600);
+  opacity: 1;
+}
+
+[data-theme="dark"] .hero {
+  background: linear-gradient(135deg, #0f172a 0%, #022c22 45%, #047857 100%);
+  background-size: 220% 220%;
+  animation: contactHeroDarkShift 22s ease-in-out infinite;
+  color: #f8fafc;
+}
+
+@keyframes contactHeroDarkShift {
+  0%, 100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 55%;
+  }
+}
+
+[data-theme="dark"] .heroTitle {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .heroSubtitle {
+  color: #cbd5e1;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .hero {
+    animation: none;
+    background-size: 100% 100%;
+  }
 }
 
 .container {
@@ -20,22 +115,13 @@
   margin: 0 auto;
 }
 
-.heroTitle {
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: var(--spacing-lg);
-  line-height: 1.2;
-}
-
-.heroSubtitle {
-  font-size: 1.25rem;
-  line-height: 1.6;
-  opacity: 0.9;
-}
-
 .contactInfo {
   padding: var(--spacing-3xl) 0;
   background: var(--card-bg);
+}
+
+[data-theme="dark"] .contact .contactInfo {
+  background: transparent;
 }
 
 .contactGrid {
@@ -351,6 +437,7 @@
   position: relative;
 }
 
+/* Verify-medicine & any flow using .healthFlow without .contact */
 [data-theme="dark"] .healthFlow {
   background: linear-gradient(
     180deg,
@@ -375,28 +462,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-theme="dark"] .healthFlow {
-    animation: none;
-    background-size: 100% 100%;
-  }
-}
-
-[data-theme="dark"] .healthFlow .hero {
-  background: linear-gradient(135deg, #0f172a 0%, #022c22 45%, #047857 100%);
-  background-size: 220% 220%;
-  animation: healthFlowHeroShift 22s ease-in-out infinite;
-}
-
-@keyframes healthFlowHeroShift {
-  0%, 100% {
-    background-position: 0% 40%;
-  }
-  50% {
-    background-position: 100% 55%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-theme="dark"] .healthFlow .hero {
     animation: none;
     background-size: 100% 100%;
   }
