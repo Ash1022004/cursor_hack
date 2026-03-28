@@ -37,13 +37,6 @@ const BASE_NAV = [
   { name: 'Reach Out', href: '/contact', icon: MessageCircle, description: 'We\'re here for you' },
 ] as const;
 
-const DASHBOARD_ITEM = {
-  name: 'Dashboard',
-  href: '/dashboard',
-  icon: LayoutDashboard,
-  description: 'Progress, interventions, and your mental health journey',
-} as const;
-
 const PEER_SUPPORT_ITEM = {
   name: 'Peer support',
   href: '/dashboard/peer-support',
@@ -81,12 +74,7 @@ const Header: React.FC = () => {
 
   const navigation = useMemo(() => {
     if (user?.role === 'student') {
-      return [
-        BASE_NAV[0],
-        DASHBOARD_ITEM,
-        PEER_SUPPORT_ITEM,
-        ...BASE_NAV.slice(1),
-      ];
+      return [BASE_NAV[0], PEER_SUPPORT_ITEM, ...BASE_NAV.slice(1)];
     }
     return [...BASE_NAV];
   }, [user?.role]);
@@ -97,12 +85,6 @@ const Header: React.FC = () => {
         pathname === PEER_SUPPORT_ITEM.href ||
         pathname.startsWith(`${PEER_SUPPORT_ITEM.href}/`)
       );
-    }
-    if (href === DASHBOARD_ITEM.href) {
-      if (pathname === '/dashboard') return true;
-      if (!pathname.startsWith('/dashboard/')) return false;
-      if (pathname.startsWith(PEER_SUPPORT_ITEM.href)) return false;
-      return true;
     }
     return pathname === href;
   };
@@ -155,23 +137,42 @@ const Header: React.FC = () => {
                   </Link>
                 </>
               )}
-              <Link
-                href="/dashboard"
-                className={styles.authButton}
-                aria-label={user?.firstName ? `${user.firstName} profile` : "Profile"}
-              >
-                <User size={18} aria-hidden />
-                <span className={styles.authButtonLabel}>{user?.firstName || "Profile"}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                className={`${styles.authButton} ${styles.primary}`}
-                aria-label="Log out"
-              >
-                <LogOut size={20} strokeWidth={2} aria-hidden />
-                <span className={styles.authButtonLabel}>Logout</span>
-              </button>
+              <div className={styles.userMenuWrap}>
+                <button
+                  type="button"
+                  className={styles.authButton}
+                  aria-label={user?.firstName ? `Account menu for ${user.firstName}` : "Account menu"}
+                  aria-haspopup="menu"
+                >
+                  <User size={20} strokeWidth={2} aria-hidden />
+                  <span className={styles.authButtonLabel}>
+                    {user?.firstName || "Account"}
+                  </span>
+                </button>
+                <div
+                  className={styles.userMenuPanel}
+                  role="menu"
+                  aria-label="Account"
+                >
+                  <Link
+                    href="/dashboard"
+                    className={styles.userMenuItem}
+                    role="menuitem"
+                  >
+                    <LayoutDashboard size={18} strokeWidth={2} aria-hidden />
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.userMenuItemDanger}
+                    role="menuitem"
+                    onClick={logout}
+                  >
+                    <LogOut size={18} strokeWidth={2} aria-hidden />
+                    Logout
+                  </button>
+                </div>
+              </div>
             </>
           ) : (
             <>
@@ -301,17 +302,18 @@ const Header: React.FC = () => {
                     className={styles.mobileAuthButton}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <User size={22} strokeWidth={2} aria-hidden />
-                    {user?.firstName || 'Profile'}
+                    <LayoutDashboard size={22} strokeWidth={2} aria-hidden />
+                    Dashboard
                   </Link>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => {
                       logout();
                       setIsMenuOpen(false);
-                    }} 
+                    }}
                     className={`${styles.mobileAuthButton} ${styles.primary}`}
                   >
-                    <LogOut size={18} />
+                    <LogOut size={22} strokeWidth={2} aria-hidden />
                     Logout
                   </button>
                 </>

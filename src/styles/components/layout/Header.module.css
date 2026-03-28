@@ -245,13 +245,36 @@
   border-radius: var(--radius-md);
   background: var(--card-bg);
   cursor: pointer;
-  transition: var(--theme-transition);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .themeToggle {
+    transition:
+      transform 0.5s var(--motion-smooth),
+      background-color 0.4s var(--motion-smooth),
+      border-color 0.4s var(--motion-smooth),
+      box-shadow 0.5s var(--motion-smooth),
+      filter 0.4s var(--motion-smooth);
+  }
+
+  .themeToggle:hover {
+    transform: translateY(-2px) scale(1.04) rotate(-2deg);
+    filter: brightness(1.06);
+  }
+
+  .themeToggle:active {
+    transform: translateY(0) scale(0.96);
+    transition-duration: 0.12s;
+    transition-timing-function: var(--motion-tap);
+  }
 }
 
 .themeToggle:hover {
   background-color: var(--gray-100);
   border-color: var(--primary-300);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+  box-shadow: var(--btn-glow-hover), 0 0 0 2px rgba(16, 185, 129, 0.1);
 }
 
 [data-theme="dark"] .themeToggle {
@@ -263,6 +286,14 @@
 [data-theme="dark"] .themeToggle:hover {
   background: rgba(51, 65, 85, 0.95);
   border-color: rgba(52, 211, 153, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .themeToggle:hover,
+  .themeToggle:active {
+    transform: none;
+    filter: none;
+  }
 }
 
 .themeToggleIcon {
@@ -288,23 +319,41 @@
   text-decoration: none;
   font-weight: 600;
   font-size: 0.8125rem;
-  transition:
-    transform 0.3s cubic-bezier(0.34, 1.35, 0.64, 1),
-    background 0.25s ease,
-    border-color 0.25s ease,
-    color 0.2s ease,
-    box-shadow 0.3s ease;
   border: 1px solid var(--gray-300);
   color: var(--gray-900);
   background: var(--card-bg);
   white-space: nowrap;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .authButton {
+    transition:
+      transform 0.5s var(--motion-smooth),
+      background 0.4s var(--motion-smooth),
+      border-color 0.4s var(--motion-smooth),
+      color 0.35s var(--motion-smooth),
+      box-shadow 0.5s var(--motion-smooth),
+      filter 0.45s var(--motion-smooth);
+  }
+
+  .authButton:hover {
+    transform: translateY(-3px) scale(1.02);
+    filter: brightness(1.03) saturate(1.05);
+  }
+
+  .authButton:active {
+    transform: translateY(-0.5px) scale(0.98);
+    transition-duration: 0.12s;
+    transition-timing-function: var(--motion-tap);
+  }
 }
 
 .authButton:hover {
   background-color: var(--gray-100);
   border-color: var(--gray-400);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--btn-glow-hover), 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="dark"] .authButton:not(.primary) {
@@ -329,8 +378,21 @@
 .authButton.primary:hover {
   background-color: var(--primary-700);
   border-color: var(--primary-700);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.35);
+  box-shadow:
+    0 12px 36px rgba(5, 150, 105, 0.45),
+    0 0 28px rgba(45, 212, 191, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .authButton.primary:hover {
+    transform: translateY(-3px) scale(1.03);
+    filter: brightness(1.06) saturate(1.08);
+  }
+
+  .authButton.primary:active {
+    transform: translateY(0) scale(0.97);
+  }
 }
 
 /* Staff sign-in: desktop dropdown */
@@ -375,7 +437,18 @@
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--gray-900);
-  transition: background 0.15s ease;
+  transform: translateZ(0);
+  transition:
+    background 0.35s var(--motion-smooth),
+    transform 0.4s var(--motion-smooth),
+    box-shadow 0.4s var(--motion-smooth);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .staffMenuItem:hover,
+  .staffMenuItem:focus-visible {
+    transform: translateX(3px);
+  }
 }
 
 [data-theme="dark"] .staffMenuItem {
@@ -386,11 +459,13 @@
 .staffMenuItem:focus-visible {
   background: var(--gray-100);
   outline: none;
+  box-shadow: inset 3px 0 0 var(--primary-500);
 }
 
 [data-theme="dark"] .staffMenuItem:hover,
 [data-theme="dark"] .staffMenuItem:focus-visible {
   background: rgba(51, 65, 85, 0.9);
+  box-shadow: inset 3px 0 0 var(--primary-400);
 }
 
 .staffMenuItemSecondary {
@@ -419,6 +494,138 @@
 [data-theme="dark"] .staffMenuItemSecondary:focus-visible {
   background: rgba(51, 65, 85, 0.7);
   color: #e2e8f0;
+}
+
+/* Signed-in account: Dashboard + Logout (desktop hover / focus-within) */
+.userMenuWrap {
+  position: relative;
+}
+
+.userMenuWrap .authButton {
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.userMenuPanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 200px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  background: var(--card-bg);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.38s var(--motion-smooth),
+    visibility 0.38s,
+    transform 0.42s var(--motion-smooth);
+}
+
+[data-theme="dark"] .userMenuPanel {
+  border-color: rgba(45, 212, 191, 0.22);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.userMenuWrap:hover .userMenuPanel,
+.userMenuWrap:focus-within .userMenuPanel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.userMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gray-900);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  transform: translateZ(0);
+  transition:
+    background 0.35s var(--motion-smooth),
+    transform 0.4s var(--motion-smooth),
+    box-shadow 0.4s var(--motion-smooth);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .userMenuItem:hover,
+  .userMenuItem:focus-visible {
+    transform: translateX(4px);
+  }
+}
+
+[data-theme="dark"] .userMenuItem {
+  color: #f1f5f9;
+}
+
+.userMenuItem:hover,
+.userMenuItem:focus-visible {
+  background: var(--gray-100);
+  outline: none;
+  box-shadow: inset 3px 0 0 var(--primary-500);
+}
+
+[data-theme="dark"] .userMenuItem:hover,
+[data-theme="dark"] .userMenuItem:focus-visible {
+  background: rgba(45, 212, 191, 0.1);
+  box-shadow: inset 3px 0 0 var(--primary-400);
+}
+
+.userMenuItemDanger {
+  composes: userMenuItem;
+  color: var(--error-600);
+  margin-top: 2px;
+  border-top: 1px solid var(--gray-200);
+  padding-top: 12px;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .userMenuItemDanger:hover,
+  .userMenuItemDanger:focus-visible {
+    transform: translateX(4px);
+  }
+}
+
+.userMenuItemDanger:hover,
+.userMenuItemDanger:focus-visible {
+  box-shadow: inset 3px 0 0 var(--error-500);
+}
+
+[data-theme="dark"] .userMenuItemDanger {
+  color: #fca5a5;
+  border-top-color: rgba(148, 163, 184, 0.2);
+}
+
+.userMenuItemDanger:hover,
+.userMenuItemDanger:focus-visible {
+  background: var(--error-50);
+}
+
+[data-theme="dark"] .userMenuItemDanger:hover,
+[data-theme="dark"] .userMenuItemDanger:focus-visible {
+  background: rgba(127, 29, 29, 0.35);
 }
 
 .mobileMenuButton {
@@ -519,21 +726,39 @@
   border-radius: var(--radius-md);
   text-decoration: none;
   font-weight: 600;
-  transition:
-    transform 0.3s cubic-bezier(0.34, 1.35, 0.64, 1),
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.3s ease;
   border: 1px solid var(--gray-300);
   color: var(--gray-900);
   background: var(--card-bg);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mobileAuthButton {
+    transition:
+      transform 0.5s var(--motion-smooth),
+      background 0.4s var(--motion-smooth),
+      border-color 0.4s var(--motion-smooth),
+      box-shadow 0.5s var(--motion-smooth),
+      filter 0.45s var(--motion-smooth);
+  }
+
+  .mobileAuthButton:hover {
+    transform: translateY(-3px) scale(1.01);
+    filter: brightness(1.03) saturate(1.05);
+  }
+
+  .mobileAuthButton:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.12s;
+    transition-timing-function: var(--motion-tap);
+  }
 }
 
 .mobileAuthButton:hover {
   background-color: var(--gray-100);
   border-color: var(--gray-400);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--btn-glow-hover), 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="dark"] .mobileAuthButton:not(.primary) {
@@ -556,8 +781,16 @@
 .mobileAuthButton.primary:hover {
   background-color: var(--primary-700);
   border-color: var(--primary-700);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.35);
+  box-shadow:
+    0 12px 36px rgba(5, 150, 105, 0.45),
+    0 0 28px rgba(45, 212, 191, 0.25);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mobileAuthButton.primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    filter: brightness(1.06) saturate(1.08);
+  }
 }
 
 /* Responsive Design */
