@@ -11,7 +11,7 @@ export default function HealthHubPage() {
       title="Health Tools - Sehat-Saathi"
       description="General health information tools. Not a substitute for professional care."
     >
-      <div className={contactStyles.contact}>
+      <div className={`${contactStyles.contact} ${contactStyles.healthFlow}`}>
         <HealthToolsSection />
 
         <MotionSection className={contactStyles.faq}>

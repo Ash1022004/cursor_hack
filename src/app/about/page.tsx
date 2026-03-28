@@ -1,11 +1,15 @@
 "use client";
 
 import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import Layout from '@/components/layout/Layout';
 import { Heart, Users, Shield, Award, Target, Lightbulb } from 'lucide-react';
+import MotionSection from '@/components/ui/MotionSection';
+import { fadeUp, staggerContainer, fadeUpItem } from '@/animations/variants';
 import styles from '@/styles/pages/About.module.css';
 
 const AboutPage: React.FC = () => {
+  const reduce = useReducedMotion();
   const values = [
     {
       icon: Heart,
@@ -59,7 +63,7 @@ const AboutPage: React.FC = () => {
         </section>
 
         {/* Mission Section */}
-        <section className={styles.mission}>
+        <MotionSection className={styles.mission}>
           <div className={styles.container}>
             <div className={styles.missionContent}>
               <h2 className={styles.sectionTitle}>Our Mission</h2>
@@ -76,60 +80,78 @@ const AboutPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </section>
+        </MotionSection>
 
         {/* Values Section */}
         <section className={styles.values}>
           <div className={styles.container}>
-            <div className={styles.valuesHeader}>
+            <motion.div
+              className={styles.valuesHeader}
+              variants={reduce ? undefined : fadeUp}
+              initial={reduce ? undefined : "hidden"}
+              whileInView={reduce ? undefined : "visible"}
+              viewport={{ once: true, margin: "-60px", amount: 0.2 }}
+            >
               <h2 className={styles.sectionTitle}>Our Values</h2>
               <p className={styles.sectionSubtitle}>
                 The principles that guide everything we do at Sehat-Saathi
               </p>
-            </div>
-            <div className={styles.valuesGrid}>
+            </motion.div>
+            <motion.div
+              className={styles.valuesGrid}
+              variants={reduce ? undefined : staggerContainer}
+              initial={reduce ? undefined : "hidden"}
+              whileInView={reduce ? undefined : "visible"}
+              viewport={{ once: true, margin: "-60px", amount: 0.2 }}
+            >
               {values.map((value, index) => {
                 const Icon = value.icon;
                 return (
-                  <div key={index} className={styles.valueCard}>
+                  <motion.div key={index} className={styles.valueCard} variants={reduce ? undefined : fadeUpItem}>
                     <div className={styles.valueIcon}>
                       <Icon size={32} />
                     </div>
                     <h3 className={styles.valueTitle}>{value.title}</h3>
                     <p className={styles.valueDescription}>{value.description}</p>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Stats Section */}
-        <section className={styles.stats}>
+        <MotionSection className={styles.stats}>
           <div className={styles.container}>
-            <div className={styles.statsGrid}>
-              <div className={styles.statItem}>
+            <motion.div
+              className={styles.statsGrid}
+              variants={reduce ? undefined : staggerContainer}
+              initial={reduce ? undefined : "hidden"}
+              whileInView={reduce ? undefined : "visible"}
+              viewport={{ once: true, margin: "-50px", amount: 0.25 }}
+            >
+              <motion.div className={styles.statItem} variants={reduce ? undefined : fadeUpItem}>
                 <div className={styles.statNumber}>10,000+</div>
                 <div className={styles.statLabel}>Students Helped</div>
-              </div>
-              <div className={styles.statItem}>
+              </motion.div>
+              <motion.div className={styles.statItem} variants={reduce ? undefined : fadeUpItem}>
                 <div className={styles.statNumber}>50+</div>
                 <div className={styles.statLabel}>Universities</div>
-              </div>
-              <div className={styles.statItem}>
+              </motion.div>
+              <motion.div className={styles.statItem} variants={reduce ? undefined : fadeUpItem}>
                 <div className={styles.statNumber}>95%</div>
                 <div className={styles.statLabel}>Satisfaction Rate</div>
-              </div>
-              <div className={styles.statItem}>
+              </motion.div>
+              <motion.div className={styles.statItem} variants={reduce ? undefined : fadeUpItem}>
                 <div className={styles.statNumber}>24/7</div>
                 <div className={styles.statLabel}>Support Available</div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </section>
+        </MotionSection>
 
         {/* Team Section */}
-        <section className={styles.team}>
+        <MotionSection className={styles.team}>
           <div className={styles.container}>
             <div className={styles.teamHeader}>
               <h2 className={styles.sectionTitle}>Our Team</h2>
@@ -151,7 +173,7 @@ const AboutPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </section>
+        </MotionSection>
       </div>
     </Layout>
   );

@@ -2,8 +2,23 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  User,
+  Mail,
+  Phone,
+  CalendarDays,
+  MapPin,
+  Stethoscope,
+  Building2,
+  Star,
+  CheckCircle2,
+} from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import MotionButton from "@/components/ui/MotionButton";
 import styles from "@/styles/pages/Contact.module.css";
+import ap from "@/styles/pages/AppointmentsFlow.module.css";
+import motionBtnStyles from "@/styles/components/ui/MotionButton.module.css";
 import {
   fetchHospitals,
   type AppointmentHospitalOption,
@@ -20,6 +35,8 @@ type Doctor = {
 type ApptRow = Record<string, unknown>;
 
 export default function AppointmentsPage() {
+  const reduce = useReducedMotion();
+  const minDate = new Date().toISOString().slice(0, 10);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -195,7 +212,7 @@ export default function AppointmentsPage() {
       title="Appointments - Sehat-Saathi"
       description="Request an appointment at a hospital with a specific doctor."
     >
-      <div className={styles.contact}>
+      <div className={`${styles.contact} ${styles.healthFlow}`}>
         <section className={styles.hero}>
           <div className={styles.container}>
             <div className={styles.heroContent}>
@@ -250,20 +267,23 @@ export default function AppointmentsPage() {
                   <label className={styles.label} htmlFor="indianState">
                     State / Union territory (India)
                   </label>
-                  <select
-                    id="indianState"
-                    className={styles.select}
-                    value={indianState}
-                    onChange={(e) => setIndianState(e.target.value)}
-                    required
-                  >
+                  <div className={ap.inputWithIcon}>
+                    <MapPin className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                    <select
+                      id="indianState"
+                      className={`${styles.select} ${ap.paddedControl}`}
+                      value={indianState}
+                      onChange={(e) => setIndianState(e.target.value)}
+                      required
+                    >
                     <option value="">Select your state</option>
                     {INDIAN_STATES_AND_UTS.map((s) => (
                       <option key={s.value} value={s.value}>
                         {s.label}
                       </option>
                     ))}
-                  </select>
+                    </select>
+                  </div>
                 </div>
 
                 <div className={styles.formRow}>
@@ -271,28 +291,34 @@ export default function AppointmentsPage() {
                     <label className={styles.label} htmlFor="name">
                       Full name
                     </label>
-                    <input
-                      id="name"
-                      className={styles.input}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      autoComplete="name"
-                    />
+                    <div className={ap.inputWithIcon}>
+                      <User className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="name"
+                        className={`${styles.input} ${ap.paddedControl}`}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        autoComplete="name"
+                      />
+                    </div>
                   </div>
                   <div className={styles.inputGroup}>
                     <label className={styles.label} htmlFor="email">
                       Email
                     </label>
-                    <input
-                      id="email"
-                      type="email"
-                      className={styles.input}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                    />
+                    <div className={ap.inputWithIcon}>
+                      <Mail className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="email"
+                        type="email"
+                        className={`${styles.input} ${ap.paddedControl}`}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoComplete="email"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -301,29 +327,39 @@ export default function AppointmentsPage() {
                     <label className={styles.label} htmlFor="phone">
                       Phone number
                     </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      className={styles.input}
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                      autoComplete="tel"
-                      placeholder="e.g. +91 98765 43210"
-                    />
+                    <div className={ap.inputWithIcon}>
+                      <Phone className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="phone"
+                        type="tel"
+                        className={`${styles.input} ${ap.paddedControl}`}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        autoComplete="tel"
+                        placeholder="e.g. +91 98765 43210"
+                      />
+                    </div>
                   </div>
                   <div className={styles.inputGroup}>
                     <label className={styles.label} htmlFor="preferredDate">
-                      Preferred date or time
+                      Preferred date
                     </label>
-                    <input
-                      id="preferredDate"
-                      className={styles.input}
-                      value={preferredDate}
-                      onChange={(e) => setPreferredDate(e.target.value)}
-                      required
-                      placeholder="e.g. 2026-04-15 morning"
-                    />
+                    <div className={`${ap.inputWithIcon} ${ap.dateField}`}>
+                      <CalendarDays className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="preferredDate"
+                        type="date"
+                        min={minDate}
+                        className={`${styles.input} ${ap.dateInput}`}
+                        value={preferredDate}
+                        onChange={(e) => setPreferredDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <p className={styles.healthMeta} style={{ marginTop: 8 }}>
+                      Pick a day; add time preferences in notes if you like.
+                    </p>
                   </div>
                 </div>
 
@@ -332,14 +368,16 @@ export default function AppointmentsPage() {
                     <label className={styles.label} htmlFor="hospitalId">
                       Hospital
                     </label>
-                    <select
-                      id="hospitalId"
-                      className={styles.select}
-                      value={hospitalId}
-                      onChange={(e) => setHospitalId(e.target.value)}
-                      required
-                      disabled={cantPickHospital}
-                    >
+                    <div className={ap.inputWithIcon}>
+                      <Building2 className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <select
+                        id="hospitalId"
+                        className={`${styles.select} ${ap.paddedControl}`}
+                        value={hospitalId}
+                        onChange={(e) => setHospitalId(e.target.value)}
+                        required
+                        disabled={cantPickHospital}
+                      >
                       <option value="">
                         {!indianState.trim()
                           ? "Select a state first"
@@ -364,20 +402,23 @@ export default function AppointmentsPage() {
                           {h.name} — {h.city}
                         </option>
                       ))}
-                    </select>
+                      </select>
+                    </div>
                   </div>
                   <div className={styles.inputGroup}>
                     <label className={styles.label} htmlFor="doctorId">
                       Doctor at this hospital
                     </label>
-                    <select
-                      id="doctorId"
-                      className={styles.select}
-                      value={doctorId}
-                      onChange={(e) => setDoctorId(e.target.value)}
-                      required
-                      disabled={!hospitalId || loadingDoctors || cantPickHospital}
-                    >
+                    <div className={ap.inputWithIcon}>
+                      <Stethoscope className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <select
+                        id="doctorId"
+                        className={`${styles.select} ${ap.paddedControl}`}
+                        value={doctorId}
+                        onChange={(e) => setDoctorId(e.target.value)}
+                        required
+                        disabled={!hospitalId || loadingDoctors || cantPickHospital}
+                      >
                       <option value="">
                         {!hospitalId
                           ? "First choose a hospital"
@@ -391,34 +432,82 @@ export default function AppointmentsPage() {
                           {d.department ? ` · ${d.department}` : ""})
                         </option>
                       ))}
-                    </select>
+                      </select>
+                    </div>
                   </div>
                 </div>
+
+                {selectedDoctor && (
+                  <div className={ap.doctorCard}>
+                    <div className={ap.doctorAvatar} aria-hidden>
+                      {selectedDoctor.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className={ap.doctorMeta}>
+                      <p className={ap.doctorName}>{selectedDoctor.name}</p>
+                      <p className={ap.doctorSpec}>{selectedDoctor.specialty}</p>
+                      {selectedDoctor.department ? (
+                        <p className={ap.doctorSpec}>{selectedDoctor.department}</p>
+                      ) : null}
+                      <div className={ap.ratingRow}>
+                        <Star className={ap.star} size={16} fill="currentColor" aria-hidden />
+                        <span>4.8</span>
+                        <span style={{ fontWeight: 500, opacity: 0.85 }}>Patient-friendly slot</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className={styles.inputGroup}>
                   <label className={styles.label} htmlFor="notes">
                     Notes (optional)
                   </label>
-                  <textarea
-                    id="notes"
-                    className={styles.textarea}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    rows={3}
-                    placeholder="Symptoms, referral, or other context"
-                  />
+                  <div className={`${ap.inputWithIcon} ${ap.textareaWithIcon}`}>
+                    <Stethoscope className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                    <textarea
+                      id="notes"
+                      className={`${styles.textarea} ${ap.notesArea}`}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={3}
+                      placeholder="Symptoms, time of day, or referral context"
+                    />
+                  </div>
                 </div>
 
-                <button
+                <MotionButton
                   type="submit"
-                  className={styles.submitButton}
                   disabled={loading || loadingHospitals || cantPickHospital}
+                  className={`${styles.submitButton} ${motionBtnStyles.motionBtn} ${loading ? ap.submitPulse : ""}`}
                 >
                   {loading ? <div className={styles.spinner} /> : "Submit request"}
-                </button>
+                </MotionButton>
               </form>
 
-              {message && <p className={styles.faqAnswer}>{message}</p>}
+              <AnimatePresence mode="wait">
+                {message ? (
+                  <motion.div
+                    key="ok"
+                    className={ap.successBanner}
+                    role="status"
+                    initial={reduce ? undefined : { opacity: 0, y: 16, scale: 0.98 }}
+                    animate={
+                      reduce
+                        ? undefined
+                        : { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 24 } }
+                    }
+                    exit={reduce ? undefined : { opacity: 0, y: -8 }}
+                  >
+                    <motion.div
+                      className={ap.successIcon}
+                      initial={reduce ? undefined : { scale: 0 }}
+                      animate={reduce ? undefined : { scale: 1, transition: { delay: 0.08, type: "spring", stiffness: 400, damping: 12 } }}
+                    >
+                      <CheckCircle2 size={36} strokeWidth={2} aria-hidden />
+                    </motion.div>
+                    <p className={ap.successText}>{message}</p>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
               {error && <p className={`${styles.faqAnswer} ${styles.healthError}`}>{error}</p>}
 
               {list.length > 0 && (

@@ -217,6 +217,34 @@
   min-height: 120px;
 }
 
+.select {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+  background: var(--card-bg);
+  color: var(--gray-900);
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+[data-theme="dark"] .healthFlow .input:focus,
+[data-theme="dark"] .healthFlow .textarea:focus,
+[data-theme="dark"] .healthFlow .select:focus {
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow:
+    0 0 0 3px rgba(45, 212, 191, 0.16),
+    0 0 24px rgba(45, 212, 191, 0.08);
+}
+
 .submitButton {
   display: flex;
   align-items: center;
@@ -316,6 +344,105 @@
 .faqAnswer {
   color: var(--gray-600);
   line-height: 1.6;
+}
+
+/* Health hub + symptom / medicine / appointment flows — dark: hero-style gradients (not flat) */
+.healthFlow {
+  position: relative;
+}
+
+[data-theme="dark"] .healthFlow {
+  background: linear-gradient(
+    180deg,
+    #0f172a 0%,
+    #0a1f1d 24%,
+    #064e3b 48%,
+    #1e293b 74%,
+    #0f172a 100%
+  );
+  background-size: 100% 320%;
+  animation: healthFlowBgShift 26s ease-in-out infinite;
+}
+
+@keyframes healthFlowBgShift {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .healthFlow {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+[data-theme="dark"] .healthFlow .hero {
+  background: linear-gradient(135deg, #0f172a 0%, #022c22 45%, #047857 100%);
+  background-size: 220% 220%;
+  animation: healthFlowHeroShift 22s ease-in-out infinite;
+}
+
+@keyframes healthFlowHeroShift {
+  0%, 100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 55%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .healthFlow .hero {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+[data-theme="dark"] .healthFlow .contactInfo {
+  background: transparent;
+}
+
+[data-theme="dark"] .healthFlow .contactForm {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.2) 0%,
+    rgba(30, 41, 59, 0.45) 45%,
+    rgba(15, 23, 42, 0.35) 100%
+  );
+}
+
+[data-theme="dark"] .healthFlow .faq {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.35) 0%,
+    rgba(30, 41, 59, 0.5) 100%
+  );
+}
+
+[data-theme="dark"] .healthFlow .formContainer {
+  background: linear-gradient(
+    165deg,
+    rgba(30, 41, 59, 0.78) 0%,
+    rgba(15, 23, 42, 0.9) 52%,
+    rgba(6, 78, 59, 0.22) 100%
+  );
+  border-color: rgba(52, 211, 153, 0.14);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(52, 211, 153, 0.06);
+}
+
+[data-theme="dark"] .healthFlow .contactCard {
+  background: linear-gradient(
+    165deg,
+    rgba(30, 41, 59, 0.72) 0%,
+    rgba(15, 23, 42, 0.88) 100%
+  );
+  border-color: rgba(52, 211, 153, 0.12);
 }
 
 /* Responsive Design */
