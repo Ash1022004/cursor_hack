@@ -85,12 +85,22 @@ export function mapRawApifyItemToHospital(
 
 /**
  * Fetches mapped hospitals via Convex HTTP (`/api/apify/hospitals` → Convex rewrite).
- * Apify runs on Convex using `APIFY_API_KEY` and dataset/actor env vars on the deployment.
+ * Apify runs on Convex using `APIFY_TOKEN` and dataset/actor env vars on the deployment.
  */
-export async function fetchHospitals(): Promise<AppointmentHospitalOption[]> {
+export async function fetchHospitals(
+  indianState: string
+): Promise<AppointmentHospitalOption[]> {
+  const state = indianState.trim();
+  if (!state) {
+    return [];
+  }
+
   let res: Response;
   try {
-    res = await fetch("/api/apify/hospitals", { cache: "no-store" });
+    res = await fetch(
+      `/api/apify/hospitals?state=${encodeURIComponent(state)}`,
+      { cache: "no-store" }
+    );
   } catch (e) {
     console.warn("[Appointments] Network error loading hospitals", e);
     return [];

@@ -1,40 +1,48 @@
 "use client";
 
-import React, { useState, useEffect, useRef, Suspense } from "react";
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import Layout from "@/components/layout/Layout";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@cvx/_generated/api";
-import { Stethoscope, Calendar, CheckCircle, Clock, MapPin } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  User,
+  Mail,
+  Phone,
+  CalendarDays,
+  MapPin,
+  Stethoscope,
+  Building2,
+  Star,
+  CheckCircle2,
+} from "lucide-react";
+import Layout from "@/components/layout/Layout";
+import MotionButton from "@/components/ui/MotionButton";
+import styles from "@/styles/pages/Contact.module.css";
+import ap from "@/styles/pages/AppointmentsFlow.module.css";
+import motionBtnStyles from "@/styles/components/ui/MotionButton.module.css";
+import {
+  fetchHospitals,
+  type AppointmentHospitalOption,
+} from "@/lib/apifyHospitals";
+import { INDIAN_STATES_AND_UTS } from "@/lib/indianStates";
 
-/* ─── Types ─────────────────────────────── */
-type PortalCounsellor = {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  specialization: string[];
-  availability: string | string[];
-};
-type BookingConfirmation = {
+type Doctor = {
+  id: string;
   name: string;
-  email: string;
-  counsellorName: string;
-  preferredDate: string;
-  notes?: string;
+  specialty: string;
+  department?: string;
 };
 
-function buildNotesFromSearchParams(
-  sp: ReadonlyURLSearchParams | URLSearchParams
-): string {
+type ApptRow = Record<string, unknown>;
+
+function buildNotesFromSearchParams(sp: ReadonlyURLSearchParams): string {
   const hospital = sp.get("hospital")?.trim();
   const city = sp.get("city")?.trim();
   const doctor = sp.get("doctor")?.trim();
   const specialty = sp.get("specialty")?.trim();
   const context = sp.get("context")?.trim();
-  const notes = sp.get("notes")?.trim();
+  const notesParam = sp.get("notes")?.trim();
   const parts: string[] = [];
   if (hospital) {
     parts.push(
@@ -45,81 +53,106 @@ function buildNotesFromSearchParams(
     parts.push(`Interest: ${[doctor, specialty].filter(Boolean).join(" — ")}`);
   }
   if (context) parts.push(context);
-  if (notes) parts.push(notes);
+  if (notesParam) parts.push(notesParam);
   return parts.join(". ");
 }
-
-/* ─── Styles ─────────────────────────────── */
-const card: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #e5e7eb",
-  borderRadius: 12,
-  padding: 20,
-};
-const inp: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1.5px solid #d1d5db",
-  borderRadius: 8,
-  fontSize: 14,
-  outline: "none",
-  boxSizing: "border-box",
-};
-const sel: React.CSSProperties = { ...inp, cursor: "pointer" };
-const lbl: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 600,
-  color: "#374151",
-  marginBottom: 4,
-  display: "block",
-};
-const primaryBtn = (disabled = false): React.CSSProperties => ({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 8,
-  padding: "11px 28px",
-  background: disabled ? "#9ca3af" : "#2563eb",
-  color: "#fff",
-  border: "none",
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 700,
-  cursor: disabled ? "not-allowed" : "pointer",
-});
 
 function AppointmentsPageInner() {
   const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    counsellorId: "",
-    preferredDate: "",
-    notes: "",
-  });
-  const [booking, setBooking] = useState(false);
-  const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(
-    null
-  );
-  const [bookError, setBookError] = useState("");
-  const [specialtyHint, setSpecialtyHint] = useState(false);
-  const [formSession, setFormSession] = useState(0);
-
   const profilePrefillDone = useRef(false);
-  const urlInitDone = useRef(false);
+  const urlNotesApplied = useRef(false);
+
+  const reduce = useReducedMotion();
+  const minDate = new Date().toISOString().slice(0, 10);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [hospitalId, setHospitalId] = useState("");
+  const [doctorId, setDoctorId] = useState("");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [hospitals, setHospitals] = useState<AppointmentHospitalOption[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [indianState, setIndianState] = useState("");
+  const [loadingHospitals, setLoadingHospitals] = useState(false);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [list, setList] = useState<ApptRow[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [directoryError, setDirectoryError] = useState<string | null>(null);
+  /** Ignore stale responses when the user changes state before a slow Apify run finishes. */
+  const hospitalsLoadId = useRef(0);
+
+  async function loadHospitals(stateValue: string) {
+    if (!stateValue.trim()) {
+      setHospitals([]);
+      return;
+    }
+    const loadId = ++hospitalsLoadId.current;
+    setLoadingHospitals(true);
+    setDirectoryError(null);
+    try {
+      const rows = await fetchHospitals(stateValue);
+      if (loadId !== hospitalsLoadId.current) return;
+      setHospitals(rows);
+    } catch {
+      if (loadId !== hospitalsLoadId.current) return;
+      setHospitals([]);
+      setDirectoryError("Failed to load hospitals");
+    } finally {
+      if (loadId === hospitalsLoadId.current) {
+        setLoadingHospitals(false);
+      }
+    }
+  }
+
+  async function loadApifyDoctors(
+    hId: string,
+    hospitalMeta?: AppointmentHospitalOption
+  ) {
+    if (!hId) {
+      setDoctors([]);
+      return;
+    }
+    setLoadingDoctors(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ hospitalId: hId });
+      if (hospitalMeta?.name) params.set("hospitalName", hospitalMeta.name);
+      if (hospitalMeta?.speciality) params.set("speciality", hospitalMeta.speciality);
+      const res = await fetch(`/api/apify/doctors?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = (await res.json()) as { doctors?: Doctor[] };
+      setDoctors(Array.isArray(data.doctors) ? data.doctors : []);
+    } catch (err) {
+      setDoctors([]);
+      setError(err instanceof Error ? err.message : "Could not load doctors");
+    } finally {
+      setLoadingDoctors(false);
+    }
+  }
+
+  async function refreshList() {
+    try {
+      const res = await fetch("/api/appointments");
+      const data = (await res.json()) as { appointments?: ApptRow[]; error?: string };
+      if (!res.ok) {
+        setList([]);
+        return;
+      }
+      setList(Array.isArray(data.appointments) ? data.appointments : []);
+    } catch {
+      setList([]);
+    }
+  }
 
   useEffect(() => {
-    profilePrefillDone.current = false;
-    urlInitDone.current = false;
-  }, [formSession]);
+    void refreshList();
+  }, []);
 
-  const bookMutation = useMutation(api.guestAppointments.createGuest);
-  const portalCounsellors = useQuery(api.adminAnalytics.listCounsellorsPublic) as
-    | PortalCounsellor[]
-    | undefined;
-
-  /* Logged-in student: prefill contact fields once, only where empty */
   useEffect(() => {
     if (authLoading || profilePrefillDone.current || !user) return;
     if (user.role !== "student") {
@@ -127,338 +160,455 @@ function AppointmentsPageInner() {
       return;
     }
     profilePrefillDone.current = true;
-    setForm((f) => ({
-      ...f,
-      name:
-        f.name ||
-        `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-        f.name,
-      email: f.email || user.email || f.email,
-      phone:
-        f.phone ||
-        (user.contactNo != null ? String(user.contactNo) : f.phone),
-    }));
-  }, [user, authLoading, formSession]);
+    const full = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+    setName((n) => n || full);
+    setEmail((e) => e || user.email || "");
+    setPhone((p) => p || (user.contactNo != null ? String(user.contactNo) : ""));
+  }, [user, authLoading]);
 
-  /* URL / hospital-finder context + counsellorId or specialty-based suggestion */
   useEffect(() => {
-    if (portalCounsellors === undefined || urlInitDone.current) return;
-    urlInitDone.current = true;
-
-    const id = searchParams.get("counsellorId")?.trim();
-    let pickedBySpecialty = false;
-
-    if (id && portalCounsellors.some((c) => c._id === id)) {
-      setForm((f) => ({ ...f, counsellorId: id }));
-    } else if (portalCounsellors.length > 0) {
-      const specialty = searchParams.get("specialty")?.trim();
-      if (specialty) {
-        const lower = specialty.toLowerCase();
-        const match = portalCounsellors.find((c) =>
-          (c.specialization ?? []).some((s) => {
-            const sl = s.toLowerCase();
-            return (
-              sl === lower ||
-              sl.includes(lower) ||
-              lower.includes(sl)
-            );
-          })
-        );
-        if (match) {
-          pickedBySpecialty = true;
-          setForm((f) => ({
-            ...f,
-            counsellorId: f.counsellorId || match._id,
-          }));
-          setSpecialtyHint(true);
-        }
-      }
-    }
-
+    if (urlNotesApplied.current) return;
     const built = buildNotesFromSearchParams(searchParams);
-    if (built) {
-      setForm((f) => ({ ...f, notes: f.notes ? f.notes : built }));
-    }
+    if (!built) return;
+    urlNotesApplied.current = true;
+    setNotes((prev) => (prev ? prev : built));
+  }, [searchParams]);
 
-    if (!pickedBySpecialty) setSpecialtyHint(false);
-  }, [searchParams, portalCounsellors, formSession]);
-
-  const handleBook = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBookError("");
-    const counsellor = portalCounsellors?.find((c) => c._id === form.counsellorId);
-    if (!counsellor) {
-      setBookError("Please select a counsellor.");
+  useEffect(() => {
+    setHospitalId("");
+    setDoctorId("");
+    setDoctors([]);
+    setHospitals([]);
+    setDirectoryError(null);
+    if (!indianState.trim()) {
       return;
     }
-    setBooking(true);
+    void loadHospitals(indianState);
+  }, [indianState]);
+
+  useEffect(() => {
+    setDoctorId("");
+    setDoctors([]);
+    if (!hospitalId) return;
+    const meta = hospitals.find((h) => h.id === hospitalId);
+    void loadApifyDoctors(hospitalId, meta);
+  }, [hospitalId, hospitals]);
+
+  const selectedHospital = hospitals.find((h) => h.id === hospitalId);
+  const selectedDoctor = doctors.find((d) => d.id === doctorId);
+
+  const cantPickHospital = Boolean(
+    !indianState.trim() ||
+      loadingHospitals ||
+      (Boolean(directoryError) && hospitals.length === 0) ||
+      (Boolean(indianState.trim()) &&
+        !loadingHospitals &&
+        hospitals.length === 0 &&
+        !directoryError)
+  );
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
     try {
-      await bookMutation({
-        name: form.name,
-        email: form.email,
-        phone: form.phone || undefined,
-        department: (counsellor.specialization ?? []).join(", ") || "General Counselling",
-        preferredDate: form.preferredDate,
-        notes: form.notes || undefined,
-        counsellorId: counsellor._id,
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          hospitalId,
+          doctorId,
+          preferredDate,
+          notes: notes || undefined,
+          hospitalName: selectedHospital?.name,
+          hospitalCity: selectedHospital?.city,
+          hospitalAddress: selectedHospital?.address,
+          hospitalRating: selectedHospital?.rating,
+          hospitalSpeciality: selectedHospital?.speciality,
+          indianState,
+          doctorName: selectedDoctor?.name,
+          doctorSpecialty: selectedDoctor?.specialty,
+        }),
       });
-      setConfirmation({
-        name: form.name,
-        email: form.email,
-        counsellorName: `${counsellor.firstName} ${counsellor.lastName}`,
-        preferredDate: form.preferredDate,
-        notes: form.notes,
-      });
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        counsellorId: "",
-        preferredDate: "",
-        notes: "",
-      });
-      setSpecialtyHint(false);
-      setFormSession((s) => s + 1);
-    } catch (err) {
-      setBookError(
-        err instanceof Error ? err.message : "Booking failed. Please try again."
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error || "Could not book");
+      setMessage(
+        "Appointment request was sent to the provider. The clinic should contact you to confirm."
       );
+      setName("");
+      setEmail("");
+      setPhone("");
+      setHospitalId("");
+      setDoctorId("");
+      setPreferredDate("");
+      setNotes("");
+      setDoctors([]);
+      if (indianState) void loadHospitals(indianState);
+      await refreshList();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
-      setBooking(false);
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <Layout
       title="Appointments - Sehat-Saathi"
-      description="Book appointments with our registered counsellors."
+      description="Request an appointment at a hospital with a specific doctor."
     >
-      <div style={{ maxWidth: 940, margin: "0 auto", padding: "32px 16px" }}>
-
-        <div style={{ marginBottom: 24 }}>
-          <Link
-            href="/health"
-            style={{ fontSize: 13, color: "#6b7280", textDecoration: "none" }}
-          >
-            ← Back to Health Tools
-          </Link>
-          <h1 style={{ margin: "8px 0 4px", fontSize: "1.8rem", fontWeight: 800 }}>
-            <Stethoscope
-              size={22}
-              style={{ verticalAlign: "middle", marginRight: 8, color: "#2563eb" }}
-            />
-            Book a Counsellor
-          </h1>
-          <p style={{ margin: "0 0 4px", color: "#6b7280", fontSize: 14 }}>
-            Book directly with our registered portal counsellors.
-          </p>
-          <Link
-            href="/health/hospitals"
-            style={{ fontSize: 13, color: "#7c3aed", textDecoration: "none", fontWeight: 600 }}
-          >
-            <MapPin
-              size={13}
-              style={{ verticalAlign: "middle", marginRight: 4 }}
-            />
-            Looking for nearby hospitals? Use the Hospital Finder →
-          </Link>
-        </div>
-
-        {confirmation ? (
-          <div
-            style={{
-              ...card,
-              border: "2px solid #bbf7d0",
-              maxWidth: 560,
-              margin: "0 auto",
-            }}
-          >
-            <div style={{ textAlign: "center", padding: "16px 0 12px" }}>
-              <CheckCircle size={56} color="#059669" style={{ marginBottom: 12 }} />
-              <h2 style={{ margin: "0 0 6px", fontSize: "1.4rem", color: "#064e3b" }}>
-                Appointment Requested!
-              </h2>
-              <p style={{ margin: 0, color: "#6b7280", fontSize: 14 }}>
-                Your request has been submitted. The counsellor will confirm your
-                appointment.
+      <div className={`${styles.contact} ${styles.healthFlow}`}>
+        <section className={styles.hero}>
+          <div className={styles.container}>
+            <div className={styles.heroContent}>
+              <h1 className={styles.heroTitle}>Book an appointment</h1>
+              <p className={styles.heroSubtitle}>
+                <Link href="/health" className={styles.healthBackLink}>
+                  ← Back to Health tools
+                </Link>
               </p>
             </div>
-
-            <div
-              style={{
-                background: "#f0fdf4",
-                border: "1px solid #a7f3d0",
-                borderRadius: 10,
-                padding: "16px 20px",
-                margin: "16px 0",
-              }}
-            >
-              {[
-                ["Patient", confirmation.name],
-                ["Email", confirmation.email],
-                ["Counsellor", `Dr. ${confirmation.counsellorName}`],
-                ["Preferred Date", confirmation.preferredDate],
-                ...(confirmation.notes ? [["Notes", confirmation.notes]] : []),
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "5px 0",
-                    fontSize: 14,
-                    borderBottom: "1px solid #d1fae5",
-                  }}
-                >
-                  <span style={{ color: "#6b7280" }}>{label}</span>
-                  <strong style={{ maxWidth: "60%", textAlign: "right" }}>
-                    {value}
-                  </strong>
-                </div>
-              ))}
-            </div>
-
-            <div
-              style={{
-                padding: "10px 14px",
-                background: "#fffbeb",
-                border: "1px solid #fde68a",
-                borderRadius: 8,
-                fontSize: 13,
-                color: "#92400e",
-                marginBottom: 16,
-              }}
-            >
-              A confirmation will be sent to{" "}
-              <strong>{confirmation.email}</strong> once the counsellor reviews your
-              request.
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setConfirmation(null)}
-              style={primaryBtn()}
-            >
-              <Calendar size={15} /> Book Another Appointment
-            </button>
           </div>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "320px 1fr",
-              gap: 20,
-              alignItems: "start",
-            }}
-          >
-            <div>
-              <h3
-                style={{
-                  margin: "0 0 12px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "#374151",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                Our Counsellors
-              </h3>
-              {!portalCounsellors ? (
-                <p style={{ color: "#9ca3af", fontSize: 13 }}>Loading...</p>
-              ) : portalCounsellors.length === 0 ? (
-                <div
-                  style={{
-                    ...card,
-                    textAlign: "center",
-                    color: "#9ca3af",
-                    fontSize: 13,
-                    padding: 24,
-                  }}
-                >
-                  No counsellors registered yet.
+        </section>
+
+        <section className={styles.contactForm}>
+          <div className={styles.container}>
+            <div className={styles.formContainer}>
+              <div className={styles.formHeader}>
+                <h2 className={styles.formTitle}>Your details</h2>
+                <p className={styles.formSubtitle}>
+                  Choose a <strong>state or UT</strong>, then a hospital in that region (India only, via Apify
+                  on Convex). Doctors listed are sample slots for that hospital—swap for a real directory
+                  later. First hospital load can take up to a minute.
+                </p>
+                {user?.role === "student" && (
+                  <p className={styles.healthMeta} style={{ marginTop: 10 }}>
+                    You&apos;re signed in — name, email, and phone can be pre-filled from your profile.
+                    Edit anything before you submit.
+                  </p>
+                )}
+              </div>
+
+              {directoryError && (
+                <p className={`${styles.faqAnswer} ${styles.healthError}`} role="alert">
+                  {directoryError}{" "}
+                  <button
+                    type="button"
+                    className={styles.textLinkButton}
+                    onClick={() => indianState && void loadHospitals(indianState)}
+                  >
+                    Retry
+                  </button>
+                </p>
+              )}
+
+              {indianState.trim() &&
+                !loadingHospitals &&
+                hospitals.length === 0 &&
+                !directoryError && (
+                  <p className={styles.faqAnswer} role="status">
+                    No hospitals for this state yet—wait and Retry (Apify can take 1–2 minutes). Check Convex
+                    logs for <code className={styles.inlineCode}>hospitalsNode</code>. Dataset mode filters by
+                    state name in the address.
+                  </p>
+                )}
+
+              <form onSubmit={onSubmit} className={styles.form}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label} htmlFor="indianState">
+                    State / Union territory (India)
+                  </label>
+                  <div className={ap.inputWithIcon}>
+                    <MapPin className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                    <select
+                      id="indianState"
+                      className={`${styles.select} ${ap.paddedControl}`}
+                      value={indianState}
+                      onChange={(e) => setIndianState(e.target.value)}
+                      required
+                    >
+                    <option value="">Select your state</option>
+                    {INDIAN_STATES_AND_UTS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                    </select>
+                  </div>
                 </div>
-              ) : (
-                <div style={{ display: "grid", gap: 10 }}>
-                  {portalCounsellors.map((c) => {
-                    const selected = form.counsellorId === c._id;
-                    return (
-                      <div
-                        key={c._id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setForm({ ...form, counsellorId: c._id })}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setForm({ ...form, counsellorId: c._id });
-                          }
-                        }}
-                        style={{
-                          ...card,
-                          cursor: "pointer",
-                          borderColor: selected ? "#2563eb" : "#e5e7eb",
-                          borderWidth: selected ? 2 : 1,
-                          background: selected ? "#eff6ff" : "#fff",
-                          transition: "all 0.15s",
-                        }}
+
+                <div className={styles.formRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} htmlFor="name">
+                      Full name
+                    </label>
+                    <div className={ap.inputWithIcon}>
+                      <User className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="name"
+                        className={`${styles.input} ${ap.paddedControl}`}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        autoComplete="name"
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} htmlFor="email">
+                      Email
+                    </label>
+                    <div className={ap.inputWithIcon}>
+                      <Mail className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="email"
+                        type="email"
+                        className={`${styles.input} ${ap.paddedControl}`}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoComplete="email"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} htmlFor="phone">
+                      Phone number
+                    </label>
+                    <div className={ap.inputWithIcon}>
+                      <Phone className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="phone"
+                        type="tel"
+                        className={`${styles.input} ${ap.paddedControl}`}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        autoComplete="tel"
+                        placeholder="e.g. +91 98765 43210"
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} htmlFor="preferredDate">
+                      Preferred date
+                    </label>
+                    <div className={`${ap.inputWithIcon} ${ap.dateField}`}>
+                      <CalendarDays className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <input
+                        id="preferredDate"
+                        type="date"
+                        min={minDate}
+                        className={`${styles.input} ${ap.dateInput}`}
+                        value={preferredDate}
+                        onChange={(e) => setPreferredDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <p className={styles.healthMeta} style={{ marginTop: 8 }}>
+                      Pick a day; add time preferences in notes if you like.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} htmlFor="hospitalId">
+                      Hospital
+                    </label>
+                    <div className={ap.inputWithIcon}>
+                      <Building2 className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <select
+                        id="hospitalId"
+                        className={`${styles.select} ${ap.paddedControl}`}
+                        value={hospitalId}
+                        onChange={(e) => setHospitalId(e.target.value)}
+                        required
+                        disabled={cantPickHospital}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                          }}
+                      <option value="">
+                        {!indianState.trim()
+                          ? "Select a state first"
+                          : loadingHospitals
+                            ? "Loading hospitals…"
+                            : "Select a hospital"}
+                      </option>
+                      {hospitals.map((h) => (
+                        <option
+                          key={h.id}
+                          value={h.id}
+                          title={
+                            [
+                              h.rating && `Rating: ${h.rating}`,
+                              h.speciality && `Speciality: ${h.speciality}`,
+                              h.address,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || undefined
+                          }
                         >
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: 14 }}>
-                              Dr. {c.firstName} {c.lastName}
-                            </div>
-                            {c.specialization?.length > 0 && (
-                              <div
-                                style={{
-                                  marginTop: 5,
-                                  display: "flex",
-                                  gap: 4,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                {c.specialization.slice(0, 3).map((s, i) => (
-                                  <span
-                                    key={i}
-                                    style={{
-                                      fontSize: 10,
-                                      background: "#dbeafe",
-                                      color: "#1e40af",
-                                      padding: "1px 7px",
-                                      borderRadius: 10,
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    {s}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          {selected && <CheckCircle size={18} color="#2563eb" />}
-                        </div>
-                        {c.availability && (
-                          <div
-                            style={{
-                              marginTop: 8,
-                              fontSize: 11,
-                              color: "#6b7280",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            <Clock size={11} />
-                            {Array.isArray(c.availability)
-                              ? c.availability.join(", ")
-                              : c.availability}
-                          </div>
+                          {h.name} — {h.city}
+                        </option>
+                      ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} htmlFor="doctorId">
+                      Doctor at this hospital
+                    </label>
+                    <div className={ap.inputWithIcon}>
+                      <Stethoscope className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                      <select
+                        id="doctorId"
+                        className={`${styles.select} ${ap.paddedControl}`}
+                        value={doctorId}
+                        onChange={(e) => setDoctorId(e.target.value)}
+                        required
+                        disabled={!hospitalId || loadingDoctors || cantPickHospital}
+                      >
+                      <option value="">
+                        {!hospitalId
+                          ? "First choose a hospital"
+                          : loadingDoctors
+                            ? "Loading doctors…"
+                            : "Select a doctor"}
+                      </option>
+                      {doctors.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d.specialty}
+                          {d.department ? ` · ${d.department}` : ""})
+                        </option>
+                      ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedDoctor && (
+                  <div className={ap.doctorCard}>
+                    <div className={ap.doctorAvatar} aria-hidden>
+                      {selectedDoctor.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className={ap.doctorMeta}>
+                      <p className={ap.doctorName}>{selectedDoctor.name}</p>
+                      <p className={ap.doctorSpec}>{selectedDoctor.specialty}</p>
+                      {selectedDoctor.department ? (
+                        <p className={ap.doctorSpec}>{selectedDoctor.department}</p>
+                      ) : null}
+                      <div className={ap.ratingRow}>
+                        <Star className={ap.star} size={16} fill="currentColor" aria-hidden />
+                        <span>4.8</span>
+                        <span style={{ fontWeight: 500, opacity: 0.85 }}>Patient-friendly slot</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className={styles.inputGroup}>
+                  <label className={styles.label} htmlFor="notes">
+                    Notes (optional)
+                  </label>
+                  <div className={`${ap.inputWithIcon} ${ap.textareaWithIcon}`}>
+                    <Stethoscope className={ap.leadingIcon} size={20} strokeWidth={2} aria-hidden />
+                    <textarea
+                      id="notes"
+                      className={`${styles.textarea} ${ap.notesArea}`}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={3}
+                      placeholder="Symptoms, time of day, or referral context"
+                    />
+                  </div>
+                </div>
+
+                <MotionButton
+                  type="submit"
+                  disabled={loading || loadingHospitals || cantPickHospital}
+                  className={`${styles.submitButton} ${motionBtnStyles.motionBtn} ${loading ? ap.submitPulse : ""}`}
+                >
+                  {loading ? <div className={styles.spinner} /> : "Submit request"}
+                </MotionButton>
+              </form>
+
+              <AnimatePresence mode="wait">
+                {message ? (
+                  <motion.div
+                    key="ok"
+                    className={ap.successBanner}
+                    role="status"
+                    initial={reduce ? undefined : { opacity: 0, y: 16, scale: 0.98 }}
+                    animate={
+                      reduce
+                        ? undefined
+                        : { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 24 } }
+                    }
+                    exit={reduce ? undefined : { opacity: 0, y: -8 }}
+                  >
+                    <motion.div
+                      className={ap.successIcon}
+                      initial={reduce ? undefined : { scale: 0 }}
+                      animate={reduce ? undefined : { scale: 1, transition: { delay: 0.08, type: "spring", stiffness: 400, damping: 12 } }}
+                    >
+                      <CheckCircle2 size={36} strokeWidth={2} aria-hidden />
+                    </motion.div>
+                    <p className={ap.successText}>{message}</p>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+              {error && <p className={`${styles.faqAnswer} ${styles.healthError}`}>{error}</p>}
+
+              {list.length > 0 && (
+                <div className={`${styles.faqGrid} ${styles.healthResultSection}`}>
+                  <h3 className={styles.formTitle}>Recent requests</h3>
+                  {list.map((a, idx) => {
+                    const id = String(a.id ?? a._id ?? idx);
+                    const rowName = String(a.name ?? a.patientName ?? "—");
+                    const rowEmail = String(a.email ?? "");
+                    const rowPhone = String(a.phone ?? a.phoneNumber ?? "");
+                    const hosp =
+                      (a.hospitalName as string | undefined) ??
+                      (a.hospital as string | undefined);
+                    const city = (a.hospitalCity as string | undefined) ?? "";
+                    const doc =
+                      (a.doctorName as string | undefined) ??
+                      (a.doctor as string | undefined);
+                    const spec =
+                      (a.doctorSpecialty as string | undefined) ??
+                      (a.specialty as string | undefined);
+                    const when = String(a.preferredDate ?? a.date ?? a.scheduledFor ?? "—");
+                    return (
+                      <div key={id} className={styles.faqItem}>
+                        <p className={styles.faqAnswer}>
+                          <strong>{rowName}</strong>
+                          {hosp ? (
+                            <>
+                              {" "}
+                              — {hosp}
+                              {city ? ` (${city})` : ""}
+                              {doc ? (
+                                <>
+                                  {" "}
+                                  — {doc}
+                                  {spec ? ` · ${spec}` : ""}
+                                </>
+                              ) : null}
+                            </>
+                          ) : null}{" "}
+                          — {when}
+                        </p>
+                        {(rowEmail || rowPhone) && (
+                          <p className={styles.faqAnswer}>
+                            {rowEmail}
+                            {rowPhone ? ` · ${rowPhone}` : ""}
+                          </p>
                         )}
                       </div>
                     );
@@ -466,138 +616,8 @@ function AppointmentsPageInner() {
                 </div>
               )}
             </div>
-
-            <div style={card}>
-              <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700 }}>
-                Your Details
-              </h3>
-              {user?.role === "student" && (
-                <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6b7280" }}>
-                  Signed in as a student — your name and email can be pre-filled from
-                  your profile. You can edit them before submitting.
-                </p>
-              )}
-              <form onSubmit={handleBook} style={{ display: "grid", gap: 14 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div>
-                    <label style={lbl}>Full Name *</label>
-                    <input
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      style={inp}
-                      placeholder="Your full name"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label style={lbl}>Email *</label>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      style={inp}
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div>
-                    <label style={lbl}>Phone (optional)</label>
-                    <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      style={inp}
-                      placeholder="+91 98765 43210"
-                    />
-                  </div>
-                  <div>
-                    <label style={lbl}>Preferred Date *</label>
-                    <input
-                      type="date"
-                      value={form.preferredDate}
-                      onChange={(e) =>
-                        setForm({ ...form, preferredDate: e.target.value })
-                      }
-                      style={inp}
-                      required
-                      min={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>Counsellor *</label>
-                  <select
-                    value={form.counsellorId}
-                    onChange={(e) => {
-                      setForm({ ...form, counsellorId: e.target.value });
-                      setSpecialtyHint(false);
-                    }}
-                    style={sel}
-                    required
-                  >
-                    <option value="">— Select a counsellor —</option>
-                    {portalCounsellors?.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        Dr. {c.firstName} {c.lastName}
-                      </option>
-                    ))}
-                  </select>
-                  {specialtyHint && (
-                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#6b7280" }}>
-                      Suggested based on specialty from Hospital Finder — change if you
-                      prefer someone else.
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label style={lbl}>Notes (optional)</label>
-                  <textarea
-                    value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    style={
-                      { ...inp, resize: "vertical", minHeight: 72 } as React.CSSProperties
-                    }
-                    placeholder="Symptoms, concerns, or any context..."
-                    rows={3}
-                  />
-                </div>
-
-                {bookError && (
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      background: "#fef2f2",
-                      border: "1px solid #fecaca",
-                      borderRadius: 8,
-                      color: "#dc2626",
-                      fontSize: 13,
-                    }}
-                  >
-                    {bookError}
-                  </div>
-                )}
-
-                <div>
-                  <button type="submit" disabled={booking} style={primaryBtn(booking)}>
-                    {booking ? (
-                      "Booking..."
-                    ) : (
-                      <>
-                        <Calendar size={15} /> Request Appointment
-                      </>
-                    )}
-                  </button>
-                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "#9ca3af" }}>
-                    You&apos;ll receive a confirmation once the counsellor accepts your
-                    request.
-                  </p>
-                </div>
-              </form>
-            </div>
           </div>
-        )}
+        </section>
       </div>
     </Layout>
   );
@@ -607,9 +627,12 @@ function AppointmentsPageFallback() {
   return (
     <Layout
       title="Appointments - Sehat-Saathi"
-      description="Book appointments with our registered counsellors."
+      description="Request an appointment at a hospital with a specific doctor."
     >
-      <div style={{ maxWidth: 940, margin: "0 auto", padding: "48px 16px", textAlign: "center", color: "#6b7280" }}>
+      <div
+        className={`${styles.contact} ${styles.healthFlow}`}
+        style={{ padding: "48px 16px", textAlign: "center", color: "#6b7280" }}
+      >
         Loading…
       </div>
     </Layout>

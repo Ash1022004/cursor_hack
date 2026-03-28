@@ -138,3 +138,70 @@ export function mapRawApifyItemToHospital(
     city,
   };
 }
+
+/**
+ * Extra substrings per state/UT (dropdown value, lowercased) when addresses use
+ * city or regional names instead of spelling the full state.
+ */
+const INDIAN_STATE_TEXT_ALIASES: Record<string, string[]> = {
+  delhi: ["delhi", "new delhi", "nct", "national capital territory"],
+  "dadra and nagar haveli and daman and diu": [
+    "daman",
+    "diu",
+    "dadra",
+    "silvassa",
+  ],
+  "jammu and kashmir": [
+    "jammu",
+    "kashmir",
+    "srinagar",
+    "j&k",
+    "jammu & kashmir",
+    "anantnag",
+    "baramulla",
+    "pulwama",
+    "rajouri",
+    "udhampur",
+    "kathua",
+    "samba",
+    "bandipora",
+    "ganderbal",
+    "kulgam",
+    "shopian",
+    "budgam",
+    "poonch",
+    "doda",
+    "kishtwar",
+    "reasi",
+    "ramban",
+  ],
+  ladakh: ["ladakh", "leh", "kargil", "nubra", "zanskar"],
+  "andaman and nicobar islands": [
+    "andaman",
+    "nicobar",
+    "port blair",
+    "car nicobar",
+  ],
+  puducherry: ["puducherry", "pondicherry", "karaikal", "mahe", "yanam"],
+  chandigarh: ["chandigarh"],
+  goa: ["goa"],
+  sikkim: ["sikkim", "gangtok"],
+  mizoram: ["mizoram", "aizawl"],
+};
+
+/** Keep hospitals whose address/city/name likely belong to the chosen state/UT. */
+export function filterHospitalsByIndianState(
+  hospitals: AppointmentHospitalOption[],
+  stateName: string
+): AppointmentHospitalOption[] {
+  const raw = stateName.trim().toLowerCase();
+  if (!raw) return hospitals;
+
+  const extra = INDIAN_STATE_TEXT_ALIASES[raw] ?? [];
+
+  return hospitals.filter((h) => {
+    const blob = `${h.name} ${h.address} ${h.city} ${h.speciality}`.toLowerCase();
+    if (blob.includes(raw)) return true;
+    return extra.some((a) => blob.includes(a));
+  });
+}

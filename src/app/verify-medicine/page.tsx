@@ -5,6 +5,7 @@ import Link from "next/link";
 import Layout from "@/components/layout/Layout";
 import { Pill, Upload, AlertTriangle, ImageIcon } from "lucide-react";
 import styles from "@/styles/pages/VerifyMedicine.module.css";
+import contactStyles from "@/styles/pages/Contact.module.css";
 
 type VisionExtracted = {
   medicine_name: string | null;
@@ -122,7 +123,7 @@ export default function VerifyMedicinePage() {
 
   return (
     <Layout title="Verify medicine - Sehat-Saathi" description="Upload a medicine package to identify it.">
-      <div className={styles.page}>
+      <div className={`${styles.page} ${contactStyles.healthFlow}`}>
         <div className={styles.topBar}>
           <Link href="/health" className={styles.backLink}>
             ← Back to Health tools

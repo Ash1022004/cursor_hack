@@ -17,6 +17,7 @@ import type * as commitments from "../commitments.js";
 import type * as counsellors from "../counsellors.js";
 import type * as dashboard from "../dashboard.js";
 import type * as doctorDashboard from "../doctorDashboard.js";
+import type * as doctorsNode from "../doctorsNode.js";
 import type * as guestAppointments from "../guestAppointments.js";
 import type * as helplines from "../helplines.js";
 import type * as hospitalsNode from "../hospitalsNode.js";
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   counsellors: typeof counsellors;
   dashboard: typeof dashboard;
   doctorDashboard: typeof doctorDashboard;
+  doctorsNode: typeof doctorsNode;
   guestAppointments: typeof guestAppointments;
   helplines: typeof helplines;
   hospitalsNode: typeof hospitalsNode;

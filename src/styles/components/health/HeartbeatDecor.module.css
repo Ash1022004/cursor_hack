@@ -1,0 +1,36 @@
+.wrap {
+  width: 100%;
+  max-width: 320px;
+  margin: var(--spacing-md) auto;
+  color: var(--primary-500);
+  opacity: 0.55;
+}
+
+[data-theme="dark"] .wrap {
+  color: var(--primary-300);
+  opacity: 0.65;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.path {
+  stroke-dasharray: 12 10;
+  animation: hbStroke 3.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}
+
+@keyframes hbStroke {
+  to {
+    stroke-dashoffset: -120;
+  }
+}
