@@ -113,6 +113,30 @@ async function executeTurn(
     });
   }
 
+  // For logged-in users (anonymousId = "jwt:<userId>"), merge their portal profile
+  let userOccupation: string | undefined;
+  let userAgeGroup: string | undefined;
+  let userBio: string | undefined;
+  let userInstitution: string | undefined;
+
+  if (args.anonymousId.startsWith("jwt:")) {
+    const userId = args.anonymousId.slice(4);
+    try {
+      const userRecord = await ctx.runQuery(internal.users.getById, {
+        userId: userId as Id<"users">,
+      });
+      if (userRecord) {
+        userOccupation = userRecord.occupation ?? undefined;
+        userAgeGroup = userRecord.ageGroup ?? undefined;
+        userBio = userRecord.bio ?? undefined;
+        // Use university as location hint if patient has no institution set
+        userInstitution = userRecord.university ?? undefined;
+      }
+    } catch {
+      // Non-blocking — proceed without user profile enrichment
+    }
+  }
+
   const profile: PatientProfile = {
     anonymousId: patient.anonymousId,
     age: patient.age,
@@ -125,6 +149,11 @@ async function executeTurn(
     crisisFlag: patient.crisisFlag,
     totalSessions: patient.totalSessions,
     language: patient.language,
+    institution: patient.institution ?? userInstitution,
+    memoryNote: patient.memoryNote,
+    occupation: userOccupation,
+    ageGroup: userAgeGroup,
+    userBio: userBio,
   };
 
   // Fetch pending commitments for follow-up injection
@@ -200,6 +229,7 @@ async function executeTurn(
     crisisSignal: extracted.crisisSignal,
     moodScore: extracted.moodScore,
     dominantEmotion: extracted.dominantEmotion,
+    memoryFacts: extracted.memoryFacts,
   });
 
   if (traceEnabled) {

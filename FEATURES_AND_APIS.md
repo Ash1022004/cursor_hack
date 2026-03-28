@@ -107,7 +107,21 @@ Navigation landing page. No external APIs. Links to all tools above + Relax & Re
 
 ---
 
-### 1.9 Admin Dashboard — `/admin` *(role: admin)*
+### 1.9 Peer support — `/dashboard/peer-support` *(students only)*
+**What it does:** 1:1 chat between students after a connection request is accepted. Visibility is **off** (default), **private** (not listed; share your user ID so others can request), or **open** (listed in directory with optional pseudonym, topics, bio). All peer HTTP APIs require `Authorization: Bearer <student JWT>` and are implemented on Convex (`internal.peerSupport.*`).
+
+| Layer | Detail |
+|---|---|
+| UI | Settings, directory, incoming/outgoing requests, message threads with polling (~3–4s) |
+| Convex HTTP | See paths under **Peer support (JWT, student)** in this file (section 3b below) |
+| Tables | `peerSupportSettings`, `peerBlocks`, `peerConnectionRequests`, `peerConversations`, `peerMessages` |
+| Client | [`src/lib/peerSupportApi.ts`](src/lib/peerSupportApi.ts) — Axios to `/api/user/peer/*` (proxied via `CONVEX_SITE_URL`) |
+
+**Privacy notes:** Email and phone are never exposed in the open directory. Blocking hides a peer from your lists. Messages are not end-to-end encrypted (stored in Convex like the rest of the app).
+
+---
+
+### 1.10 Admin Dashboard — `/admin` *(role: admin)*
 | Layer | Detail |
 |---|---|
 | Convex queries | `api.adminAnalytics.getAdminOverview`, `listAllPatients`, `listAllAppointments`, `listCounsellorsPublic` |
@@ -115,7 +129,7 @@ Navigation landing page. No external APIs. Links to all tools above + Relax & Re
 
 ---
 
-### 1.10 Doctor Dashboard — `/doctor` *(role: counsellor)*
+### 1.11 Doctor Dashboard — `/doctor` *(role: counsellor)*
 | Layer | Detail |
 |---|---|
 | Convex queries | `api.doctorDashboard.getDoctorOverview`, `getMyAppointments`, `getMyPatients`, `getPatientDetail` |
@@ -220,6 +234,26 @@ api.patientChat.sendMessage  (Convex action)
 | `lib/embeddings.ts` | `embedMany()`, `topKBySimilarity()` | Embedding + cosine similarity |
 | `lib/chatAgentGraph.ts` | `runLoopAgent()` | LangGraph ReAct agent + tool definitions |
 | `lib/apifyRest.ts` | `apifyRunActorSync()`, `apifyListDatasetItems()` | Apify REST client |
+| `peerSupport.ts` | `getSettingsInternal`, `updateSettingsInternal`, `listDirectoryInternal`, `sendRequestInternal`, `acceptRequestInternal`, `listConversationsInternal`, `getMessagesInternal`, `sendMessageInternal`, … | Student peer chat (internal-only; called from HTTP) |
+
+### Peer support HTTP APIs (Convex site URL, student JWT)
+
+| Method | Path | Body / query | Notes |
+|--------|------|----------------|------|
+| `GET` | `/api/user/peer/settings` | — | Current visibility + directory-safe fields |
+| `POST` | `/api/user/peer/settings` | `{ visibility, peerDisplayName?, peerTopics?, peerBio? }` | Upsert settings |
+| `GET` | `/api/user/peer/directory` | — | Users with `visibility === open` (limited fields) |
+| `POST` | `/api/user/peer/requests` | `{ toUserId }` | Target must not be `off`; no duplicate pending |
+| `GET` | `/api/user/peer/requests/incoming` | — | Pending where you are recipient |
+| `GET` | `/api/user/peer/requests/outgoing` | — | Pending where you are sender |
+| `POST` | `/api/user/peer/requests/accept` | `{ requestId }` | Creates conversation if needed |
+| `POST` | `/api/user/peer/requests/reject` | `{ requestId }` | |
+| `POST` | `/api/user/peer/requests/cancel` | `{ requestId }` | Sender cancels outgoing |
+| `GET` | `/api/user/peer/conversations` | — | Your threads (sorted by `lastMessageAt`) |
+| `POST` | `/api/user/peer/conversations` | `{ otherUserId }` | `ensureConversation` when already connected |
+| `GET` | `/api/user/peer/messages` | `?conversationId=&limit=&beforeCreatedAt=` | Paginated-ish window |
+| `POST` | `/api/user/peer/messages` | `{ conversationId, body }` | Requires accepted connection |
+| `POST` | `/api/user/peer/block` | `{ blockedUserId }` | Hides peer from your peer UX |
 
 ---
 

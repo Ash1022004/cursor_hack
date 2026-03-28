@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Bot } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import styles from "@/styles/components/saathi-chat.module.css";
 
 const agentLabels: Record<string, string> = {
@@ -42,7 +44,31 @@ export default function ChatBubble({ role, content, agentType }: Props) {
               <Bot size={16} strokeWidth={2} />
             </span>
           )}
-          <span className={styles.bubbleText}>{content}</span>
+          <div className={styles.bubbleText}>
+            {isUser ? (
+              <span className={styles.bubblePlain}>{content}</span>
+            ) : (
+              <div className={styles.bubbleMarkdown}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ href, children, ...rest }) => (
+                      <a
+                        {...rest}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
     </div>

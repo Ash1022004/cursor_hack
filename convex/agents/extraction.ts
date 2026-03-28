@@ -20,6 +20,7 @@ const extractionSchema = z.object({
   crisisSignal: z.boolean().default(false),
   dominantEmotion: z.string().default("neutral"),
   moodScore: z.number().min(1).max(10).default(5),
+  memoryFacts: z.array(z.string()).default([]),
 });
 
 const EXTRACTION_PROMPT = `
@@ -35,7 +36,8 @@ Return ONLY valid JSON matching this schema exactly:
   "phqHint": null,
   "crisisSignal": false,
   "dominantEmotion": "",
-  "moodScore": 5
+  "moodScore": 5,
+  "memoryFacts": []
 }
 Rules:
 - crisisSignal = true for ANY phrase like suicidal ideation, self-harm, hopelessness, wanting to die
@@ -43,6 +45,7 @@ Rules:
 - Empty arrays if nothing detected
 - moodScore 1-10 from tone
 - commitments: extract self-improvement promises/intentions (e.g. "I'll try to meditate", "I want to sleep earlier", "I'm going to exercise more"). Only clear personal commitments, not vague statements.
+- memoryFacts: array of short factual sentences (max 10 words each) worth remembering long-term about this person — e.g. their name, ongoing life situation, major stressor, key preference, important relationship. Only include facts that are genuinely meaningful and not already obvious. Empty array if nothing new.
 `;
 
 function logExtraction(
@@ -82,6 +85,7 @@ export async function extractFromMessage(
       crisisSignal: false,
       dominantEmotion: "neutral",
       moodScore: 5,
+      memoryFacts: [],
     };
   }
   const result = extractionSchema.safeParse(parsed);
@@ -96,6 +100,7 @@ export async function extractFromMessage(
       crisisSignal: false,
       dominantEmotion: "neutral",
       moodScore: 5,
+      memoryFacts: [],
     };
   }
   const d = result.data;
@@ -127,5 +132,6 @@ export async function extractFromMessage(
     crisisSignal: d.crisisSignal,
     dominantEmotion: d.dominantEmotion,
     moodScore: d.moodScore,
+    memoryFacts: d.memoryFacts,
   };
 }

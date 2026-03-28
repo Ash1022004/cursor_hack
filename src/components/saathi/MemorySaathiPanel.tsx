@@ -1,6 +1,6 @@
 "use client";
 
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "@cvx/_generated/api";
 import type { Id } from "@cvx/_generated/dataModel";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { Bot } from "lucide-react";
 import ChatBubble from "@/components/saathi/ChatBubble";
 import ChatInput from "@/components/saathi/ChatInput";
 import CrisisBanner from "@/components/saathi/CrisisBanner";
+import MemoryDrawer from "@/components/saathi/MemoryDrawer";
 import SaathiHeaderToolbar from "@/components/saathi/SaathiHeaderToolbar";
 import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
 import TypingIndicator from "@/components/chat/TypingIndicator";
@@ -34,38 +35,99 @@ export default function MemorySaathiPanel({ variant }: Props) {
   const [loading, setLoading] = useState(false);
   const [crisisDetected, setCrisisDetected] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const [domain, setDomain] = useState<
     "stress" | "burnout" | "career" | "relationships"
   >("stress");
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const anonymousId = user ? `jwt:${user._id}` : "";
+
   const sendMessage = useAction(api.patientChat.sendMessage);
+  const patientProfile = useQuery(
+    api.patients.getProfileByAnonymousId,
+    anonymousId ? { anonymousId } : "skip"
+  );
 
   const loginHref = `/login?returnUrl=${encodeURIComponent("/chat/memory")}`;
-
-  const anonymousId = user ? `jwt:${user._id}` : "";
 
   const WELCOME = user
     ? `Hi ${user.firstName}! I'm Saathi, your mental health companion. Your conversations are remembered so I can support you better over time. How are you feeling today?`
     : "Hi there! I'm Saathi, your mental health companion. How are you feeling today?";
 
+  const memorySessionKey = anonymousId
+    ? `saathi_memory_session_${anonymousId}`
+    : null;
+  const storedMemorySessionId =
+    typeof window !== "undefined" && memorySessionKey
+      ? localStorage.getItem(memorySessionKey)
+      : null;
+
+  const shouldHydrateMemorySession = Boolean(
+    isAuthenticated && anonymousId && storedMemorySessionId
+  );
+
+  const memorySessionDoc = useQuery(
+    api.sessions.getSessionForPatient,
+    shouldHydrateMemorySession
+      ? {
+          anonymousId,
+          sessionId: storedMemorySessionId as Id<"sessions">,
+        }
+      : "skip"
+  );
+
   useEffect(() => {
-    if (isAuthenticated && messages.length === 0) {
-      setMessages([{ role: "assistant", content: WELCOME }]);
+    if (!isAuthenticated || !anonymousId) return;
+
+    if (shouldHydrateMemorySession && memorySessionDoc === undefined) {
+      return;
     }
-  }, [isAuthenticated, messages.length, WELCOME]);
+
+    if (shouldHydrateMemorySession && memorySessionDoc === null) {
+      if (memorySessionKey) localStorage.removeItem(memorySessionKey);
+      setSessionId(undefined);
+      setMessages([{ role: "assistant", content: WELCOME }]);
+      return;
+    }
+
+    if (
+      memorySessionDoc &&
+      memorySessionDoc.messages &&
+      memorySessionDoc.messages.length > 0
+    ) {
+      setMessages(
+        memorySessionDoc.messages.map(
+          (m: {
+            role: "user" | "assistant";
+            content: string;
+            agentUsed?: string;
+          }) => ({
+            role: m.role,
+            content: m.content,
+            agentType: m.agentUsed,
+          })
+        )
+      );
+      setSessionId(memorySessionDoc._id);
+      return;
+    }
+
+    setMessages((prev) =>
+      prev.length === 0 ? [{ role: "assistant", content: WELCOME }] : prev
+    );
+  }, [
+    isAuthenticated,
+    anonymousId,
+    shouldHydrateMemorySession,
+    memorySessionDoc,
+    memorySessionKey,
+    WELCOME,
+  ]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
-
-  useEffect(() => {
-    if (!anonymousId) return;
-    const stored = localStorage.getItem(`saathi_memory_session_${anonymousId}`);
-    if (stored) {
-      setSessionId(stored as Id<"sessions">);
-    }
-  }, [anonymousId]);
 
   const handleLeaveFullPageChat = useCallback(() => {
     router.push("/");
@@ -207,6 +269,8 @@ export default function MemorySaathiPanel({ variant }: Props) {
             onCenterClick={handleLeaveFullPageChat}
             onClose={handleCloseFullPageChat}
             showHomeLink
+            onMemoryClick={() => setMemoryOpen(true)}
+            memoryHasContent={Boolean(patientProfile?.memoryNote)}
           />
         )}
       </div>
@@ -274,6 +338,13 @@ export default function MemorySaathiPanel({ variant }: Props) {
           ) : undefined
         }
       />
+
+      {memoryOpen && anonymousId && (
+        <MemoryDrawer
+          anonymousId={anonymousId}
+          onClose={() => setMemoryOpen(false)}
+        />
+      )}
     </div>
   );
 }

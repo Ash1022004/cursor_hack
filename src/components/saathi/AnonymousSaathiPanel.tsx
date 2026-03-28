@@ -1,6 +1,6 @@
 "use client";
 
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@cvx/_generated/api";
 import type { Id } from "@cvx/_generated/dataModel";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ChatBubble from "@/components/saathi/ChatBubble";
 import ChatInput from "@/components/saathi/ChatInput";
 import CrisisBanner from "@/components/saathi/CrisisBanner";
+import MemoryDrawer from "@/components/saathi/MemoryDrawer";
 import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
 import SaathiHeaderToolbar from "@/components/saathi/SaathiHeaderToolbar";
 import SaathiLanguageGate from "@/components/saathi/SaathiLanguageGate";
@@ -49,23 +50,21 @@ export default function AnonymousSaathiPanel({
   const [anonymousId, setAnonymousId] = useState("");
   const [missingConvex, setMissingConvex] = useState(false);
   const [needsLanguage, setNeedsLanguage] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const languageSyncSkipRef = useRef(true);
 
   const sendMessage = useAction(api.patientChat.sendMessage);
   const getOrCreatePatient = useMutation(api.patients.getOrCreatePatient);
+  const patientProfile = useQuery(
+    api.patients.getProfileByAnonymousId,
+    anonymousId ? { anonymousId } : "skip"
+  );
 
   const syncIdAndWelcome = useCallback(() => {
     const id = localStorage.getItem("saathi_id") ?? "";
     setAnonymousId(id);
-    if (id) {
-      setNeedsLanguage(false);
-      setMessages((prev) =>
-        prev.length === 0
-          ? [{ role: "assistant" as const, content: WELCOME }]
-          : prev
-      );
-    }
+    if (id) setNeedsLanguage(false);
   }, []);
 
   useEffect(() => {
@@ -81,9 +80,77 @@ export default function AnonymousSaathiPanel({
     } else {
       setAnonymousId(id);
       setNeedsLanguage(false);
-      setMessages([{ role: "assistant", content: WELCOME }]);
     }
   }, []);
+
+  const anonSessionKey = anonymousId
+    ? `saathi_anon_session_${anonymousId}`
+    : null;
+  const storedAnonSessionId =
+    typeof window !== "undefined" && anonSessionKey
+      ? localStorage.getItem(anonSessionKey)
+      : null;
+
+  const shouldHydrateAnonSession = Boolean(
+    anonymousId && storedAnonSessionId
+  );
+
+  const anonSessionDoc = useQuery(
+    api.sessions.getSessionForPatient,
+    shouldHydrateAnonSession
+      ? {
+          anonymousId,
+          sessionId: storedAnonSessionId as Id<"sessions">,
+        }
+      : "skip"
+  );
+
+  useEffect(() => {
+    if (!anonymousId || needsLanguage) return;
+
+    if (shouldHydrateAnonSession && anonSessionDoc === undefined) {
+      return;
+    }
+
+    if (shouldHydrateAnonSession && anonSessionDoc === null) {
+      if (anonSessionKey) localStorage.removeItem(anonSessionKey);
+      setSessionId(undefined);
+      setMessages([{ role: "assistant", content: WELCOME }]);
+      return;
+    }
+
+    if (
+      anonSessionDoc &&
+      anonSessionDoc.messages &&
+      anonSessionDoc.messages.length > 0
+    ) {
+      setMessages(
+        anonSessionDoc.messages.map(
+          (m: {
+            role: "user" | "assistant";
+            content: string;
+            agentUsed?: string;
+          }) => ({
+            role: m.role,
+            content: m.content,
+            agentType: m.agentUsed,
+          })
+        )
+      );
+      setSessionId(anonSessionDoc._id);
+      return;
+    }
+
+    setMessages((prev) =>
+      prev.length === 0 ? [{ role: "assistant", content: WELCOME }] : prev
+    );
+  }, [
+    anonymousId,
+    needsLanguage,
+    shouldHydrateAnonSession,
+    anonSessionDoc,
+    anonSessionKey,
+  ]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,6 +200,8 @@ export default function AnonymousSaathiPanel({
   );
 
   const handleChangeLanguage = () => {
+    const id = localStorage.getItem("saathi_id");
+    if (id) localStorage.removeItem(`saathi_anon_session_${id}`);
     localStorage.removeItem("saathi_id");
     setAnonymousId("");
     setNeedsLanguage(true);
@@ -185,6 +254,10 @@ export default function AnonymousSaathiPanel({
         },
       ]);
       setSessionId(result.sessionId);
+      localStorage.setItem(
+        `saathi_anon_session_${anonymousId}`,
+        result.sessionId
+      );
       if (result.crisisDetected) setCrisisDetected(true);
     } catch {
       setMessages((prev) => [
@@ -258,6 +331,8 @@ export default function AnonymousSaathiPanel({
               needsAttention: needsLanguage,
             }}
             showHomeLink
+            onMemoryClick={anonymousId ? () => setMemoryOpen(true) : undefined}
+            memoryHasContent={Boolean(patientProfile?.memoryNote)}
           />
         </header>
       )}
@@ -317,6 +392,13 @@ export default function AnonymousSaathiPanel({
           ) : undefined
         }
       />
+
+      {memoryOpen && anonymousId && (
+        <MemoryDrawer
+          anonymousId={anonymousId}
+          onClose={() => setMemoryOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -12,6 +12,12 @@ export interface PatientProfile {
   crisisFlag: boolean;
   totalSessions: number;
   language: string;
+  institution?: string; // city/university — used as default location for local suggestions
+  memoryNote?: string; // accumulated free-text memory, max 2000 chars
+  // Fields merged from the logged-in user's profile (when anonymousId is jwt:<userId>)
+  occupation?: string;
+  ageGroup?: string;
+  userBio?: string;
 }
 
 export interface ExtractedData {
@@ -24,4 +30,5 @@ export interface ExtractedData {
   crisisSignal: boolean;
   dominantEmotion: string;
   moodScore: number;
+  memoryFacts: string[]; // short facts worth remembering extracted from this message
 }

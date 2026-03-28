@@ -50,6 +50,7 @@ export default defineSchema({
     lastSeen: v.number(),
     language: v.string(),
     institution: v.optional(v.string()),
+    memoryNote: v.optional(v.string()), // GPT-style accumulated memory, max 2000 chars
   }).index("by_anonymousId", ["anonymousId"]),
 
   sessions: defineTable({
@@ -165,4 +166,58 @@ export default defineSchema({
     .searchIndex("search_medicine", {
       searchField: "searchBlob",
     }),
+
+  /** Student peer support: visibility + optional public directory fields. */
+  peerSupportSettings: defineTable({
+    userId: v.id("users"),
+    visibility: v.union(
+      v.literal("off"),
+      v.literal("private"),
+      v.literal("open")
+    ),
+    peerDisplayName: v.optional(v.string()),
+    peerTopics: v.array(v.string()),
+    peerBio: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_visibility", ["visibility"]),
+
+  peerBlocks: defineTable({
+    blockerUserId: v.id("users"),
+    blockedUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_blocker", ["blockerUserId"])
+    .index("by_pair", ["blockerUserId", "blockedUserId"]),
+
+  peerConnectionRequests: defineTable({
+    fromUserId: v.id("users"),
+    toUserId: v.id("users"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("rejected"),
+      v.literal("cancelled")
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_toUserId", ["toUserId"])
+    .index("by_fromUserId", ["fromUserId"])
+    .index("by_pair", ["fromUserId", "toUserId"]),
+
+  peerConversations: defineTable({
+    userMin: v.id("users"),
+    userMax: v.id("users"),
+    createdAt: v.number(),
+    lastMessageAt: v.number(),
+  }).index("by_pair", ["userMin", "userMax"]),
+
+  peerMessages: defineTable({
+    conversationId: v.id("peerConversations"),
+    senderId: v.id("users"),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_conversation_createdAt", ["conversationId", "createdAt"]),
 });

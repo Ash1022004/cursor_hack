@@ -338,6 +338,65 @@
   min-width: 0;
 }
 
+.bubblePlain {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Assistant markdown inside bot bubble */
+.bubbleMarkdown {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.bubbleMarkdown :first-child {
+  margin-top: 0;
+}
+
+.bubbleMarkdown :last-child {
+  margin-bottom: 0;
+}
+
+.bubbleMarkdown p {
+  margin: 0 0 0.65em;
+}
+
+.bubbleMarkdown ul,
+.bubbleMarkdown ol {
+  margin: 0 0 0.65em;
+  padding-left: 1.35em;
+}
+
+.bubbleMarkdown li {
+  margin: 0.2em 0;
+}
+
+.bubbleMarkdown strong {
+  font-weight: 700;
+}
+
+.bubbleMarkdown a {
+  color: var(--primary-700, #047857);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+[data-theme="dark"] .bubbleMarkdown a {
+  color: var(--primary-300, #6ee7b7);
+}
+
+.bubbleMarkdown hr {
+  border: none;
+  border-top: 1px solid rgba(15, 118, 110, 0.2);
+  margin: 0.75em 0;
+}
+
+[data-theme="dark"] .bubbleMarkdown hr {
+  border-top-color: rgba(148, 163, 184, 0.25);
+}
+
 .agentLabel {
   font-size: 10px;
   color: #8a8a8a;
@@ -1003,6 +1062,260 @@
 .langCrisisLink:hover {
   color: var(--primary-700);
   border-bottom-color: var(--primary-600);
+}
+
+/* ── Memory Drawer ── */
+.memoryOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  animation: memoryFadeIn 0.18s ease-out;
+}
+
+@media (min-width: 560px) {
+  .memoryOverlay {
+    align-items: center;
+  }
+}
+
+@keyframes memoryFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memoryOverlay { animation: none; }
+}
+
+.memoryDrawer {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 28px;
+  box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: memorySlideUp 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@media (min-width: 560px) {
+  .memoryDrawer {
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+    animation: memoryScaleIn 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+}
+
+[data-theme="dark"] .memoryDrawer {
+  background: rgba(15, 23, 42, 0.97);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+
+@keyframes memorySlideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes memoryScaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memoryDrawer { animation: none; }
+}
+
+.memoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.memoryHeaderIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--primary-600, #059669);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .memoryHeaderIcon {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--primary-300, #6ee7b7);
+}
+
+.memoryTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  flex: 1;
+}
+
+[data-theme="dark"] .memoryTitle {
+  color: #f1f5f9;
+}
+
+.memorySubtitle {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+}
+
+[data-theme="dark"] .memorySubtitle {
+  color: #94a3b8;
+}
+
+.memoryCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.memoryCloseBtn:hover {
+  background: rgba(148, 163, 184, 0.15);
+  color: #334155;
+}
+
+[data-theme="dark"] .memoryCloseBtn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .memoryCloseBtn:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.memoryTextarea {
+  width: 100%;
+  min-height: 160px;
+  max-height: 320px;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #1e293b;
+  font-size: 13.5px;
+  line-height: 1.6;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.memoryTextarea:focus {
+  border-color: var(--primary-400, #34d399);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+[data-theme="dark"] .memoryTextarea {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(71, 85, 105, 0.55);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .memoryTextarea:focus {
+  border-color: var(--primary-500, #10b981);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12);
+}
+
+.memoryMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.memoryCharCount {
+  font-size: 11px;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.memoryCharCountWarn {
+  color: #f59e0b;
+}
+
+.memoryActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.memoryClearBtn {
+  padding: 8px 16px;
+  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.memoryClearBtn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+[data-theme="dark"] .memoryClearBtn {
+  color: #94a3b8;
+  border-color: rgba(71, 85, 105, 0.5);
+}
+
+.memorySaveBtn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-500, #10b981), var(--primary-600, #059669));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.memorySaveBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.memorySaveBtn:active {
+  transform: translateY(0);
+}
+
+.memorySaveBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

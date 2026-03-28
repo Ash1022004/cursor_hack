@@ -54,8 +54,22 @@ Uses `internal.stickyNotes.*`.
 | Method | Path | Body | Implementation |
 |--------|------|------|----------------|
 | `POST` | `/api/user/chat/ai` | `{ message, sessionId? }` | `anonymousId = "jwt:" + userId`, then `internal.patientChat.runTurn` (full agent pipeline). |
-| `POST` | `/api/user/chat/peer-to-peer` | — | Placeholder text response. |
 | `POST` | `/api/user/chat/counsellor` | — | Placeholder text response. |
+
+### Peer support (JWT, role `student`)
+
+Registered in `convex/http/routes/peerRoutes.ts`. All handlers call `internal.peerSupport.*` after `verifyAuth`; non-students get 403.
+
+| Method | Path | Summary |
+|--------|------|---------|
+| `GET` / `POST` | `/api/user/peer/settings` | Read / update visibility (`off` \| `private` \| `open`) and optional directory fields |
+| `GET` | `/api/user/peer/directory` | List open peers (excludes blocks) |
+| `POST` | `/api/user/peer/requests` | Send connection request `{ toUserId }` |
+| `GET` | `/api/user/peer/requests/incoming` / `outgoing` | Pending requests |
+| `POST` | `/api/user/peer/requests/accept` / `reject` / `cancel` | `{ requestId }` |
+| `GET` / `POST` | `/api/user/peer/conversations` | List threads; `POST` `{ otherUserId }` ensures thread when connected |
+| `GET` / `POST` | `/api/user/peer/messages` | Load / send messages in a conversation |
+| `POST` | `/api/user/peer/block` | `{ blockedUserId }` |
 
 ### Counsellor (JWT, role `counsellor`)
 

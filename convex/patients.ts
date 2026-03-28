@@ -5,7 +5,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import { assertValidAnonymousId } from "./lib/anonymousId";
+import { assertValidAnonymousId, assertValidSubjectKey } from "./lib/anonymousId";
 
 export const getOrCreatePatient = mutation({
   args: { anonymousId: v.string(), language: v.optional(v.string()) },
@@ -39,7 +39,7 @@ export const getOrCreatePatient = mutation({
 export const getProfileByAnonymousId = query({
   args: { anonymousId: v.string() },
   handler: async (ctx, { anonymousId }) => {
-    assertValidAnonymousId(anonymousId);
+    assertValidSubjectKey(anonymousId);
     return await ctx.db
       .query("patients")
       .withIndex("by_anonymousId", (q) => q.eq("anonymousId", anonymousId))
@@ -79,6 +79,8 @@ export const createPatientInternal = internalMutation({
   },
 });
 
+const MEMORY_LIMIT = 2000;
+
 export const updateFromExtraction = internalMutation({
   args: {
     patientId: v.id("patients"),
@@ -90,6 +92,7 @@ export const updateFromExtraction = internalMutation({
     crisisSignal: v.boolean(),
     moodScore: v.number(),
     dominantEmotion: v.optional(v.string()),
+    memoryFacts: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const patient = await ctx.db.get(args.patientId);
@@ -98,6 +101,19 @@ export const updateFromExtraction = internalMutation({
     const merge = (existing: string[], incoming: string[]) =>
       [...new Set([...existing, ...incoming])];
 
+    // Append new memory facts as bullets, trimming oldest to stay within limit
+    let memoryNote = patient.memoryNote ?? "";
+    if (args.memoryFacts && args.memoryFacts.length > 0) {
+      const bullets = args.memoryFacts.map((f) => `• ${f}`).join("\n") + "\n";
+      memoryNote = memoryNote + bullets;
+      if (memoryNote.length > MEMORY_LIMIT) {
+        memoryNote = memoryNote.slice(memoryNote.length - MEMORY_LIMIT);
+        // Snap to the start of the next bullet so we don't cut mid-sentence
+        const firstBullet = memoryNote.indexOf("•");
+        if (firstBullet > 0) memoryNote = memoryNote.slice(firstBullet);
+      }
+    }
+
     await ctx.db.patch(args.patientId, {
       conditions: merge(patient.conditions, args.conditions),
       medications: merge(patient.medications, args.medications),
@@ -105,6 +121,7 @@ export const updateFromExtraction = internalMutation({
       copingPatterns: merge(patient.copingPatterns, args.copingPatterns),
       crisisFlag: args.crisisSignal || patient.crisisFlag,
       lastSeen: Date.now(),
+      ...(memoryNote !== (patient.memoryNote ?? "") ? { memoryNote: memoryNote || undefined } : {}),
     });
 
     // Always log mood for every message to power the sparkline chart
@@ -141,6 +158,23 @@ export const incrementSessions = internalMutation({
     await ctx.db.patch(patientId, {
       totalSessions: p.totalSessions + 1,
       lastSeen: Date.now(),
+    });
+  },
+});
+
+/** User-facing: overwrite or clear the memory note (enforces 2000-char limit). */
+export const updateMemory = mutation({
+  args: { anonymousId: v.string(), memoryNote: v.string() },
+  handler: async (ctx, { anonymousId, memoryNote }) => {
+    assertValidSubjectKey(anonymousId);
+    const patient = await ctx.db
+      .query("patients")
+      .withIndex("by_anonymousId", (q) => q.eq("anonymousId", anonymousId))
+      .first();
+    if (!patient) return;
+    const trimmed = memoryNote.trim().slice(0, MEMORY_LIMIT);
+    await ctx.db.patch(patient._id, {
+      memoryNote: trimmed || undefined,
     });
   },
 });

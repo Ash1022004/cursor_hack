@@ -9,6 +9,7 @@ import {
   Languages,
   Maximize2,
   Minimize2,
+  NotebookPen,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -33,6 +34,8 @@ type Props = {
   className?: string;
   languageMenu?: SaathiHeaderLanguageMenu;
   showHomeLink?: boolean;
+  onMemoryClick?: () => void;
+  memoryHasContent?: boolean;
 };
 
 export default function SaathiHeaderToolbar({
@@ -45,6 +48,8 @@ export default function SaathiHeaderToolbar({
   className,
   languageMenu,
   showHomeLink,
+  onMemoryClick,
+  memoryHasContent,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const onGradient = chrome === "onGradient";
@@ -243,6 +248,26 @@ export default function SaathiHeaderToolbar({
         >
           <House size={18} strokeWidth={2.25} aria-hidden />
         </Link>
+      ) : null}
+
+      {onMemoryClick ? (
+        <div className={styles.memoryBtnWrap}>
+          <button
+            type="button"
+            className={iconBtnClass}
+            onClick={onMemoryClick}
+            aria-label="View and edit memory"
+            title="Memory"
+          >
+            <NotebookPen size={18} strokeWidth={2.25} aria-hidden />
+          </button>
+          {memoryHasContent ? (
+            <span
+              className={`${styles.memoryDot}${onGradient ? ` ${styles.memoryDotOnGradient}` : ""}`}
+              aria-hidden
+            />
+          ) : null}
+        </div>
       ) : null}
 
       <button

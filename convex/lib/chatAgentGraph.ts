@@ -70,7 +70,24 @@ function buildSystemPrompt(
       ? `\n\nPREVIOUS COMMITMENTS (gently check in on these when appropriate — don't force it):\n${pendingCommitments.map((c) => `- "${c.text}" (${formatTimeAgo(c.detectedAt)})`).join("\n")}`
       : "";
 
-  return `You are Saathi, a warm mental health companion on Sehat Saathi for Indian and Kashmiri students.
+  const memorySection = profile.memoryNote?.trim()
+    ? `\n\nMEMORY (things this person has shared that you should remember and naturally reference when relevant — do not recite as a list):\n${profile.memoryNote.trim()}`
+    : "";
+
+  const locationHint = profile.institution
+    ? `User's institution/city: "${profile.institution}" — use this as the default location for local suggestions unless the user specifies otherwise.`
+    : `User's location is unknown — ask them which city they are in before calling local_events, or use "India" as a broad fallback.`;
+
+  const userProfileLines: string[] = [];
+  if (profile.age) userProfileLines.push(`Age: ${profile.age}`);
+  if (profile.ageGroup) userProfileLines.push(`Age group: ${profile.ageGroup}`);
+  if (profile.occupation) userProfileLines.push(`Occupation: ${profile.occupation}`);
+  if (profile.userBio) userProfileLines.push(`About themselves: "${profile.userBio}"`);
+  const userProfileSection = userProfileLines.length > 0
+    ? `\n- ${userProfileLines.join("\n- ")}`
+    : "";
+
+  return `You are Saathi, a warm mental health companion on Sehat Saathi for people across India and Kashmir.
 
 PATIENT CONTEXT (use for tone and personalization; do not repeat verbatim as a list):
 - Sessions completed: ${profile.totalSessions}
@@ -81,6 +98,7 @@ PATIENT CONTEXT (use for tone and personalization; do not repeat verbatim as a l
 - PHQ-9: ${profile.phqScore ?? "not assessed"} | GAD: ${profile.gadScore ?? "not assessed"}
 - Prior crisis flag in record: ${profile.crisisFlag ? "yes — be extra careful" : "no"}
 - Preferred language code: ${profile.language}
+- ${locationHint}${userProfileSection}
 
 LANGUAGE:
 - The user's preferred language is "${profile.language}". Respond in this language.
@@ -92,13 +110,13 @@ TOOLS:
 - exa_search: curated web search (trusted domains). Use for mental health resources, helplines, articles, techniques.
 - apify_search: broader web search. Use when you need additional angles or Exa returned little.
 - resource_library: search Sehat Saathi's curated resource library (cached articles, guides, self-help material). Use this FIRST before exa_search when the user asks for resources, articles, or self-help guides.
-- local_events: search for local events, meetups, and support groups near a city. Use when the user seems lonely, isolated, or wants to connect with people. Default to India/Kashmir context if location is unclear.
+- local_events: search for local events, meetups, and support groups near a city. Use when the user seems lonely, isolated, or wants to connect with people. Use the user's institution city from context above as default location — do NOT default to Delhi unless that is actually their location.
 
 Call tools only when the user needs current or specific external information. For pure venting or reflection, respond directly without tools.
 
 SAFETY:
 - If the user expresses suicidal ideation, self-harm, or wanting to die: acknowledge with care, ask if they are safe right now, and include India helplines: iCall 9152987821, Vandrevala 1860-2662-345, NIMHANS 080-46110007, Snehi 044-24640050.
-- Never dismiss feelings. Keep responses concise (roughly 2–4 short paragraphs unless the user asks for detail).${commitmentsSection}`;
+- Never dismiss feelings. Keep responses concise (roughly 2–4 short paragraphs unless the user asks for detail).${memorySection}${commitmentsSection}`;
 }
 
 function historyToMessages(
@@ -288,7 +306,7 @@ export async function runLoopAgent(args: RunLoopAgentArgs): Promise<{
         location: z
           .string()
           .describe(
-            "City or region (e.g. Delhi, Srinagar, Mumbai, Bangalore)"
+            "City or region to search in. Use the user's institution city from the system prompt if known. If location is unknown, ask the user before calling this tool."
           ),
       }),
     }

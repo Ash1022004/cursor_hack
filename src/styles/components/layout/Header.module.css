@@ -333,6 +333,94 @@
   box-shadow: 0 8px 20px rgba(5, 150, 105, 0.35);
 }
 
+/* Staff sign-in: desktop dropdown */
+.staffMenuWrap {
+  position: relative;
+}
+
+.staffMenuWrap .authButton {
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.staffMenuPanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 240px;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  background: var(--card-bg);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-theme="dark"] .staffMenuPanel {
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.staffMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gray-900);
+  transition: background 0.15s ease;
+}
+
+[data-theme="dark"] .staffMenuItem {
+  color: #f1f5f9;
+}
+
+.staffMenuItem:hover,
+.staffMenuItem:focus-visible {
+  background: var(--gray-100);
+  outline: none;
+}
+
+[data-theme="dark"] .staffMenuItem:hover,
+[data-theme="dark"] .staffMenuItem:focus-visible {
+  background: rgba(51, 65, 85, 0.9);
+}
+
+.staffMenuItemSecondary {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+[data-theme="dark"] .staffMenuItemSecondary {
+  color: #94a3b8;
+}
+
+.staffMenuItemSecondary:hover,
+.staffMenuItemSecondary:focus-visible {
+  background: var(--gray-100);
+  color: var(--gray-900);
+  outline: none;
+}
+
+[data-theme="dark"] .staffMenuItemSecondary:hover,
+[data-theme="dark"] .staffMenuItemSecondary:focus-visible {
+  background: rgba(51, 65, 85, 0.7);
+  color: #e2e8f0;
+}
+
 .mobileMenuButton {
   display: none;
   background: none;

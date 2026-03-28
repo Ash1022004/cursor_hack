@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -17,6 +17,7 @@ import {
   Shield,
   Stethoscope,
   LayoutDashboard,
+  UsersRound,
 } from 'lucide-react';
 import styles from '../../styles/components/layout/Header.module.css';
 import { useAuth } from '@/context/AuthContext';
@@ -43,20 +44,68 @@ const DASHBOARD_ITEM = {
   description: 'Progress, interventions, and your mental health journey',
 } as const;
 
+const PEER_SUPPORT_ITEM = {
+  name: 'Peer support',
+  href: '/dashboard/peer-support',
+  icon: UsersRound,
+  description: 'Chat with peers — privacy controls in your settings',
+} as const;
+
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [staffMenuOpen, setStaffMenuOpen] = useState(false);
+  const staffMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
 
+  useEffect(() => {
+    if (!staffMenuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (staffMenuRef.current?.contains(e.target as Node)) return;
+      setStaffMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setStaffMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [staffMenuOpen]);
+
+  useEffect(() => {
+    setStaffMenuOpen(false);
+  }, [pathname]);
+
   const navigation = useMemo(() => {
     if (user?.role === 'student') {
-      return [BASE_NAV[0], DASHBOARD_ITEM, ...BASE_NAV.slice(1)];
+      return [
+        BASE_NAV[0],
+        DASHBOARD_ITEM,
+        PEER_SUPPORT_ITEM,
+        ...BASE_NAV.slice(1),
+      ];
     }
     return [...BASE_NAV];
   }, [user?.role]);
 
-  const isActive = (href: string) =>
-    href === '/dashboard' ? pathname === '/dashboard' || pathname.startsWith('/dashboard/') : pathname === href;
+  const isActive = (href: string) => {
+    if (href === PEER_SUPPORT_ITEM.href) {
+      return (
+        pathname === PEER_SUPPORT_ITEM.href ||
+        pathname.startsWith(`${PEER_SUPPORT_ITEM.href}/`)
+      );
+    }
+    if (href === DASHBOARD_ITEM.href) {
+      if (pathname === '/dashboard') return true;
+      if (!pathname.startsWith('/dashboard/')) return false;
+      if (pathname.startsWith(PEER_SUPPORT_ITEM.href)) return false;
+      return true;
+    }
+    return pathname === href;
+  };
 
   return (
     <header className={styles.header}>
@@ -126,15 +175,58 @@ const Header: React.FC = () => {
             </>
           ) : (
             <>
-              <Link
-                href="/sign-in"
-                className={styles.authButton}
-                title="Counsellor / Admin"
-                aria-label="Staff sign-in"
-              >
-                <Shield size={16} strokeWidth={2} aria-hidden />
-                <span className={styles.authButtonLabel}>Staff</span>
-              </Link>
+              <div className={styles.staffMenuWrap} ref={staffMenuRef}>
+                <button
+                  type="button"
+                  className={styles.authButton}
+                  title="Admin or doctor sign-in"
+                  aria-label="Staff sign-in menu"
+                  aria-expanded={staffMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setStaffMenuOpen((o) => !o)}
+                >
+                  <Shield size={16} strokeWidth={2} aria-hidden />
+                  <span className={styles.authButtonLabel}>Staff</span>
+                </button>
+                {staffMenuOpen ? (
+                  <div className={styles.staffMenuPanel} role="menu" aria-label="Staff sign-in options">
+                    <Link
+                      href="/login-admin"
+                      className={styles.staffMenuItem}
+                      role="menuitem"
+                      onClick={() => setStaffMenuOpen(false)}
+                    >
+                      <Shield size={18} strokeWidth={2} aria-hidden />
+                      Admin dashboard
+                    </Link>
+                    <Link
+                      href="/login-doctor"
+                      className={styles.staffMenuItem}
+                      role="menuitem"
+                      onClick={() => setStaffMenuOpen(false)}
+                    >
+                      <Stethoscope size={18} strokeWidth={2} aria-hidden />
+                      Doctor / counsellor
+                    </Link>
+                    <Link
+                      href="/staff"
+                      className={styles.staffMenuItemSecondary}
+                      role="menuitem"
+                      onClick={() => setStaffMenuOpen(false)}
+                    >
+                      Staff portal overview
+                    </Link>
+                    <Link
+                      href="/sign-in"
+                      className={styles.staffMenuItemSecondary}
+                      role="menuitem"
+                      onClick={() => setStaffMenuOpen(false)}
+                    >
+                      Clerk sign-in
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
               <Link
                 href="/register"
                 className={`${styles.authButton} ${styles.primary}`}
@@ -225,6 +317,22 @@ const Header: React.FC = () => {
                 </>
               ) : (
                 <>
+                  <Link
+                    href="/login-admin"
+                    className={styles.mobileAuthButton}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Shield size={18} />
+                    Admin sign-in
+                  </Link>
+                  <Link
+                    href="/login-doctor"
+                    className={styles.mobileAuthButton}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Stethoscope size={18} />
+                    Doctor sign-in
+                  </Link>
                   <Link
                     href="/staff"
                     className={styles.mobileAuthButton}

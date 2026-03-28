@@ -63,7 +63,7 @@ const Features: React.FC = () => {
   ];
 
   return (
-    <MotionSection className={styles.features}>
+    <MotionSection id="how-it-helps" className={styles.features}>
       <div className={styles.container}>
         <motion.div
           className={styles.header}

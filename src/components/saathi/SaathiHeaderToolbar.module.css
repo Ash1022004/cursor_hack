@@ -417,3 +417,30 @@
     animation: none;
   }
 }
+
+/* Memory button */
+.memoryBtnWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.memoryDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary-500, #10b981);
+  border: 1.5px solid rgba(248, 250, 252, 0.95);
+  pointer-events: none;
+}
+
+[data-theme="dark"] .memoryDot {
+  border-color: rgba(30, 41, 59, 0.95);
+}
+
+.memoryDotOnGradient {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: #6ee7b7;
+}

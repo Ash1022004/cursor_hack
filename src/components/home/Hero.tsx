@@ -141,10 +141,10 @@ const Hero: React.FC = () => {
                 whileTap={reduceMotion ? undefined : { scale: 0.97 }}
               >
                 <RippleSurface className={styles.rippleFill} disabled={!!reduceMotion}>
-                  <button type="button" className={styles.secondaryButton}>
-                    <Play size={20} />
+                  <Link href="/#how-it-helps" className={styles.secondaryButton}>
+                    <Play size={20} aria-hidden />
                     See How It Helps
-                  </button>
+                  </Link>
                 </RippleSurface>
               </motion.div>
             </motion.div>

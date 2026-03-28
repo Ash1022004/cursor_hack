@@ -50,21 +50,6 @@ export function registerUserChatRoutes(http: HttpRouter): void {
   });
 
   http.route({
-    path: "/api/user/chat/peer-to-peer",
-    method: "POST",
-    handler: httpAction(async (ctx, request) => {
-      const auth = await verifyAuth(ctx, request);
-      if (!auth) {
-        return json({ message: "No token Provided" }, 401);
-      }
-      return new Response("peer to peer chat", {
-        status: 200,
-        headers: { "Content-Type": "text/plain" },
-      });
-    }),
-  });
-
-  http.route({
     path: "/api/user/chat/counsellor",
     method: "POST",
     handler: httpAction(async (ctx, request) => {

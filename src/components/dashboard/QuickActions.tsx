@@ -6,6 +6,7 @@ import {
   MessageCircle,
   BookOpen,
   Brain,
+  UsersRound,
 } from 'lucide-react';
 import styles from '../../styles/components/dashboard/QuickActions.module.css';
 
@@ -31,6 +32,13 @@ const QuickActions: React.FC = () => {
       icon: MessageCircle,
       href: '/saathi',
       color: 'var(--success-500)',
+    },
+    {
+      title: 'Peer support',
+      description: 'Private peer chat with privacy controls',
+      icon: UsersRound,
+      href: '/dashboard/peer-support',
+      color: 'var(--secondary-600, #7c3aed)',
     },
     {
       title: 'Read resources',
