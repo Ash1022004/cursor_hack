@@ -12,6 +12,7 @@ import PersonalizedDashboard from '@/components/dashboard/PersonalizedDashboard'
 import DailyCheckIn from '@/components/ui/DailyCheckIn';
 import MoodCheckInWidget from '@/components/home/MoodCheckInWidget';
 import RotatingAffirmation from '@/components/home/RotatingAffirmation';
+import homeStyles from '@/styles/pages/Home.module.css';
 
 const HomePage: React.FC = () => {
   const [showCheckIn, setShowCheckIn] = useState(false);
@@ -32,8 +33,9 @@ const HomePage: React.FC = () => {
       ) : (
         <>
           <Hero />
-          <RotatingAffirmation />
-          <MoodCheckInWidget onMoodSelect={(mood) => console.log('Mood selected:', mood)} />
+          <section className={homeStyles.moodSection} aria-label="Daily mood check-in">
+            <MoodCheckInWidget onMoodSelect={(mood) => console.log('Mood selected:', mood)} />
+          </section>
           <Features />
           <RotatingAffirmation />
           <Stats />

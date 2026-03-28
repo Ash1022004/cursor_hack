@@ -60,10 +60,12 @@
 .chatHeader {
   background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
   color: white;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 4px 20px rgba(5, 150, 105, 0.15);
@@ -72,21 +74,6 @@
 .chatHeaderMemory {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-}
-
-.chatHeaderLink {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.92);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  transition: background 0.2s ease;
-}
-
-.chatHeaderLink:hover {
-  background: rgba(255, 255, 255, 0.12);
 }
 
 .statusOnline {

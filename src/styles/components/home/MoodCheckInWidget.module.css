@@ -1,14 +1,27 @@
 .widget {
   background: var(--card-bg);
   border-radius: var(--radius-2xl);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--gray-200);
-  max-width: 600px;
+  padding: clamp(var(--spacing-lg), 3.5vw, var(--spacing-xl));
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px color-mix(in srgb, var(--gray-200) 80%, transparent),
+    0 24px 48px -12px rgba(15, 23, 42, 0.12);
+  border: 1px solid color-mix(in srgb, var(--gray-200) 65%, transparent);
+  width: 100%;
+  max-width: min(40rem, 100%);
   margin: 0 auto;
   position: relative;
   overflow: hidden;
   animation: slideInUp 0.5s ease-out;
+  transition: box-shadow 0.45s ease, border-color 0.35s ease, transform 0.45s ease;
+}
+
+[data-theme="dark"] .widget {
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(148, 163, 184, 0.12),
+    0 28px 56px -16px rgba(0, 0, 0, 0.45);
+  border-color: rgba(148, 163, 184, 0.14);
 }
 
 .widget::before {
@@ -24,48 +37,90 @@
 /* Header */
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: clamp(var(--spacing-md), 2.5vw, var(--spacing-xl));
+  text-align: center;
 }
 
 .heartIcon {
   color: var(--primary-500);
-  width: 24px;
-  height: 24px;
+  width: clamp(1.25rem, 3vw, 1.5rem);
+  height: clamp(1.25rem, 3vw, 1.5rem);
+  flex-shrink: 0;
   animation: gentlePulse 3s ease-in-out infinite;
 }
 
 .header h3 {
-  font-size: 1.3rem;
+  font-size: clamp(1.05rem, 2.5vw, 1.3rem);
   font-weight: 600;
   color: var(--gray-800);
   margin: 0;
+  text-wrap: balance;
+  line-height: 1.35;
 }
 
-/* Mood Options */
+/* Mood options: 2 cols (5th centered) → 3 cols → 5 cols */
 .moodOptions {
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2.8vw, 1.25rem);
+  align-items: stretch;
+}
+
+.moodButton:nth-child(5) {
+  grid-column: 1 / -1;
+  max-width: min(14rem, 100%);
+  justify-self: center;
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .moodOptions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .moodButton:nth-child(5) {
+    grid-column: auto;
+    max-width: none;
+    justify-self: stretch;
+    width: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .moodOptions {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .moodButton {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-lg);
+  padding: clamp(var(--spacing-md), 2.5vw, var(--spacing-lg));
   border: 2px solid var(--gray-200);
   border-radius: var(--radius-xl);
   background: var(--card-bg);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 100px;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.45, 0.64, 1),
+    box-shadow 0.4s ease,
+    border-color 0.35s ease,
+    background-color 0.35s ease;
+  min-width: 0;
+  min-height: 5.5rem;
   position: relative;
   overflow: hidden;
+}
+
+[data-theme="dark"] .moodButton {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: color-mix(in srgb, var(--card-bg) 96%, var(--primary-900));
 }
 
 .moodButton::before {
@@ -83,47 +138,85 @@
 }
 
 .moodButton:hover::before {
-  width: 120px;
-  height: 120px;
-  opacity: 0.1;
+  width: 140px;
+  height: 140px;
+  opacity: 0.14;
 }
 
 .moodButton:hover {
-  transform: translateY(-4px) scale(1.05);
+  transform: translateY(-6px) scale(1.06);
   border-color: var(--mood-color, var(--primary-300));
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.12),
+    0 0 0 3px color-mix(in srgb, var(--mood-color, var(--primary-400)) 22%, transparent),
+    0 0 28px color-mix(in srgb, var(--mood-color, var(--primary-500)) 18%, transparent);
+}
+
+.moodButton:active {
+  transform: translateY(-2px) scale(1.03);
+  transition-duration: 0.15s;
 }
 
 .moodEmoji {
-  font-size: 2rem;
+  font-size: clamp(1.35rem, 4vw, 2rem);
   z-index: 1;
   position: relative;
+  line-height: 1;
+  transition: transform 0.45s cubic-bezier(0.34, 1.55, 0.64, 1);
+}
+
+.moodButton:hover .moodEmoji {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.moodButton:nth-child(even):hover .moodEmoji {
+  transform: scale(1.12) rotate(4deg);
 }
 
 .moodLabel {
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 2.2vw, 0.9rem);
   font-weight: 500;
   color: var(--gray-700);
   z-index: 1;
   position: relative;
+  text-align: center;
+  text-wrap: balance;
 }
 
 /* Submitted State */
 .submittedContent {
   text-align: center;
-  padding: var(--spacing-lg) 0;
+  padding: var(--spacing-md) 0;
   animation: fadeInUp 0.5s ease-out;
 }
 
 .encouragementMessage {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
   font-weight: 500;
   color: var(--primary-600);
   line-height: 1.5;
-  padding: var(--spacing-lg);
+  padding: clamp(var(--spacing-md), 2.5vw, var(--spacing-lg));
   background: linear-gradient(135deg, var(--primary-50), var(--secondary-50));
   border-radius: var(--radius-xl);
   border: 1px solid var(--primary-100);
+  text-wrap: balance;
+}
+
+[data-theme="dark"] .encouragementMessage {
+  color: var(--primary-400);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-500) 14%, var(--card-bg)),
+    color-mix(in srgb, var(--secondary-500) 12%, var(--card-bg))
+  );
+  border-color: color-mix(in srgb, var(--primary-500) 35%, transparent);
+}
+
+[data-theme="dark"] .moodButton:hover {
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 3px color-mix(in srgb, var(--mood-color, var(--primary-400)) 25%, transparent),
+    0 0 36px color-mix(in srgb, var(--mood-color, var(--primary-500)) 15%, transparent);
 }
 
 /* Animations */
@@ -149,54 +242,24 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+@media (prefers-reduced-motion: reduce) {
   .widget {
-    margin: 0 var(--spacing-md);
-    padding: var(--spacing-lg);
+    animation: none;
   }
 
-  .moodOptions {
-    gap: var(--spacing-sm);
+  .submittedContent {
+    animation: none;
   }
 
-  .moodButton {
-    min-width: 80px;
-    padding: var(--spacing-md);
+  .heartIcon {
+    animation: none;
   }
 
-  .moodEmoji {
-    font-size: 1.5rem;
+  .moodButton:hover {
+    transform: none;
   }
 
-  .moodLabel {
-    font-size: 0.8rem;
-  }
-
-  .header h3 {
-    font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .moodOptions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .moodButton {
-    width: 100%;
-    max-width: 200px;
-    flex-direction: row;
-    justify-content: center;
-    gap: var(--spacing-sm);
-  }
-
-  .moodEmoji {
-    font-size: 1.25rem;
-  }
-
-  .moodLabel {
-    font-size: 0.9rem;
+  .moodButton:hover .moodEmoji {
+    transform: none;
   }
 }

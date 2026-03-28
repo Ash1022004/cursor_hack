@@ -1,6 +1,8 @@
 .cta {
   padding: var(--spacing-3xl) 0;
-  background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-900) 100%);
+  background:
+    linear-gradient(180deg, var(--surface-cta-top) 0%, transparent min(14%, 5rem)),
+    linear-gradient(135deg, var(--primary-700) 0%, var(--primary-900) 100%);
   color: white;
   position: relative;
   overflow: hidden;
@@ -115,8 +117,10 @@
 }
 
 .primaryButton:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(62, 98, 87, 0.25);
+  transform: translateY(-4px) scale(1.03);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
   background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
 }
 
@@ -136,9 +140,10 @@
 }
 
 .secondaryButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.55);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
 }
 
 .visualContent {

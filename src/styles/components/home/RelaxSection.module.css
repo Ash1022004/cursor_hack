@@ -1,11 +1,22 @@
 .section {
   padding: var(--spacing-3xl) var(--spacing-md);
-  background: linear-gradient(180deg, var(--page-bg) 0%, var(--gray-50) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--page-bg) 55%, var(--primary-50)) 0%,
+    var(--page-bg) 22%,
+    var(--gray-50) 100%
+  );
   transition: var(--theme-transition);
 }
 
 [data-theme="dark"] .section {
-  background: linear-gradient(180deg, #0f172a 0%, #022c22 55%, #0f172a 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--page-bg) 50%, #064e3b) 0%,
+    #0f172a 28%,
+    #022c22 55%,
+    #0f172a 100%
+  );
 }
 
 .inner {

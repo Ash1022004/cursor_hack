@@ -41,7 +41,6 @@ const RippleSurface: React.FC<RippleSurfaceProps> = ({
       style={{ position: "relative", display: "inline-flex", overflow: "hidden", borderRadius: "inherit" }}
       onPointerDown={onPointerDown}
     >
-      {children}
       {ripples.map((rip) => (
         <motion.span
           key={rip.id}
@@ -52,6 +51,7 @@ const RippleSurface: React.FC<RippleSurfaceProps> = ({
             position: "absolute",
             left: rip.x,
             top: rip.y,
+            zIndex: 0,
             width: 48,
             height: 48,
             marginLeft: -24,
@@ -62,6 +62,7 @@ const RippleSurface: React.FC<RippleSurfaceProps> = ({
           }}
         />
       ))}
+      {children}
     </span>
   );
 };

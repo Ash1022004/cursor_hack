@@ -1,6 +1,11 @@
 .testimonials {
   padding: var(--spacing-3xl) 0;
-  background: var(--gray-50);
+  background: linear-gradient(
+    180deg,
+    var(--surface-testimonials-top) 0%,
+    var(--gray-50) min(16%, 6rem),
+    var(--gray-50) 100%
+  );
 }
 
 .container {

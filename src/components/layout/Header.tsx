@@ -78,9 +78,10 @@ const Header: React.FC = () => {
                     href={item.href}
                     className={`${styles.navLink} ${isActive(item.href) ? styles.active : ''}`}
                     title={item.description}
+                    aria-label={item.name}
                   >
-                    <IconComponent size={15} strokeWidth={2} />
-                    <span>{item.name}</span>
+                    <IconComponent size={15} strokeWidth={2} aria-hidden />
+                    <span className={styles.navLinkLabel}>{item.name}</span>
                   </Link>
                 </li>
               );
@@ -95,34 +96,52 @@ const Header: React.FC = () => {
             <>
               {user?.role === 'admin' && (
                 <>
-                  <Link href="/admin" className={styles.authButton}>
-                    <Shield size={18} />
-                    Admin
+                  <Link href="/admin" className={styles.authButton} aria-label="Admin">
+                    <Shield size={18} aria-hidden />
+                    <span className={styles.authButtonLabel}>Admin</span>
                   </Link>
-                  <Link href="/admin/counsellors" className={styles.authButton}>
-                    <Shield size={18} />
-                    Counsellors
+                  <Link href="/admin/counsellors" className={styles.authButton} aria-label="Counsellors">
+                    <Shield size={18} aria-hidden />
+                    <span className={styles.authButtonLabel}>Counsellors</span>
                   </Link>
                 </>
               )}
-              <Link href="/dashboard" className={styles.authButton}>
-                <User size={18} />
-                {user?.firstName || 'Profile'}
+              <Link
+                href="/dashboard"
+                className={styles.authButton}
+                aria-label={user?.firstName ? `${user.firstName} profile` : "Profile"}
+              >
+                <User size={18} aria-hidden />
+                <span className={styles.authButtonLabel}>{user?.firstName || "Profile"}</span>
               </Link>
-              <button onClick={logout} className={`${styles.authButton} ${styles.primary}`}>
-                <LogOut size={18} />
-                Logout
+              <button
+                type="button"
+                onClick={logout}
+                className={`${styles.authButton} ${styles.primary}`}
+                aria-label="Log out"
+              >
+                <LogOut size={18} aria-hidden />
+                <span className={styles.authButtonLabel}>Logout</span>
               </button>
             </>
           ) : (
             <>
-              <Link href="/staff" className={styles.authButton} title="Admin or counsellor sign-in">
-                <Shield size={16} strokeWidth={2} />
-                Staff
+              <Link
+                href="/sign-in"
+                className={styles.authButton}
+                title="Counsellor / Admin"
+                aria-label="Staff sign-in"
+              >
+                <Shield size={16} strokeWidth={2} aria-hidden />
+                <span className={styles.authButtonLabel}>Staff</span>
               </Link>
-              <Link href="/register" className={`${styles.authButton} ${styles.primary}`}>
-                <UserPlus size={16} strokeWidth={2} />
-                Start My Journey
+              <Link
+                href="/register"
+                className={`${styles.authButton} ${styles.primary}`}
+                aria-label="Start my journey"
+              >
+                <UserPlus size={16} strokeWidth={2} aria-hidden />
+                <span className={styles.authButtonLabel}>Start My Journey</span>
               </Link>
             </>
           )}

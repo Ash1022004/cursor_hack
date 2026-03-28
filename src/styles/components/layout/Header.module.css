@@ -1,12 +1,26 @@
 .header {
-  background: var(--card-bg);
+  background: linear-gradient(
+    180deg,
+    var(--card-bg) 0%,
+    color-mix(in srgb, var(--card-bg) 88%, var(--primary-400)) 100%
+  );
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid var(--gray-200);
-  backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--gray-200) 70%, var(--primary-200));
+  backdrop-filter: blur(12px);
   overflow-x: visible;
+}
+
+[data-theme="dark"] .header {
+  background: linear-gradient(
+    180deg,
+    var(--card-bg) 0%,
+    color-mix(in srgb, var(--card-bg) 75%, #022c22) 100%
+  );
+  border-bottom-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .container {
@@ -132,11 +146,58 @@
   background-color: var(--primary-50);
 }
 
-.navLink span {
-  font-size: 0.8125rem;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
+/* Desktop: icon-first nav; label expands on hover / keyboard focus */
+@media (min-width: 769px) {
+  .navLink {
+    gap: 2px;
+  }
+
+  .navLinkLabel {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-inline-start: 0;
+    transition:
+      max-width 0.32s ease,
+      opacity 0.2s ease,
+      margin-inline-start 0.32s ease;
+    font-size: 0.8125rem;
+    font-weight: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .navLink:hover .navLinkLabel,
+  .navLink:focus-visible .navLinkLabel {
+    max-width: min(11rem, 30vw);
+    opacity: 1;
+    margin-inline-start: 4px;
+  }
+
+  .authButtonLabel {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-inline-start: 0;
+    transition:
+      max-width 0.32s ease,
+      opacity 0.2s ease,
+      margin-inline-start 0.32s ease;
+    font-size: inherit;
+    font-weight: inherit;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .authButton:hover .authButtonLabel,
+  .authButton:focus-visible .authButtonLabel {
+    max-width: min(14rem, 42vw);
+    opacity: 1;
+    margin-inline-start: 4px;
+  }
 }
 
 [data-theme="dark"] .navLink {
@@ -227,7 +288,12 @@
   text-decoration: none;
   font-weight: 600;
   font-size: 0.8125rem;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.35, 0.64, 1),
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.2s ease,
+    box-shadow 0.3s ease;
   border: 1px solid var(--gray-300);
   color: var(--gray-900);
   background: var(--card-bg);
@@ -237,6 +303,8 @@
 .authButton:hover {
   background-color: var(--gray-100);
   border-color: var(--gray-400);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="dark"] .authButton:not(.primary) {
@@ -261,6 +329,8 @@
 .authButton.primary:hover {
   background-color: var(--primary-700);
   border-color: var(--primary-700);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.35);
 }
 
 .mobileMenuButton {
@@ -361,7 +431,11 @@
   border-radius: var(--radius-md);
   text-decoration: none;
   font-weight: 600;
-  transition: all var(--transition-fast);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.35, 0.64, 1),
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.3s ease;
   border: 1px solid var(--gray-300);
   color: var(--gray-900);
   background: var(--card-bg);
@@ -370,6 +444,8 @@
 .mobileAuthButton:hover {
   background-color: var(--gray-100);
   border-color: var(--gray-400);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="dark"] .mobileAuthButton:not(.primary) {
@@ -392,6 +468,8 @@
 .mobileAuthButton.primary:hover {
   background-color: var(--primary-700);
   border-color: var(--primary-700);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.35);
 }
 
 /* Responsive Design */

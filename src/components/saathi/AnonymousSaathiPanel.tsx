@@ -1,15 +1,16 @@
 "use client";
 
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { api } from "@cvx/_generated/api";
 import type { Id } from "@cvx/_generated/dataModel";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ChatBubble from "@/components/saathi/ChatBubble";
 import ChatInput from "@/components/saathi/ChatInput";
 import CrisisBanner from "@/components/saathi/CrisisBanner";
-import MoodSparkline from "@/components/saathi/MoodSparkline";
 import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
+import SaathiHeaderToolbar from "@/components/saathi/SaathiHeaderToolbar";
 import SaathiLanguageGate from "@/components/saathi/SaathiLanguageGate";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import styles from "@/styles/components/saathi-chat.module.css";
@@ -24,12 +25,21 @@ type Props = {
   variant: Variant;
   /** When true with variant="full", fill Layout main instead of min-height:100vh */
   layoutEmbedded?: boolean;
+  /** When true (e.g. floating dock), hide the large compact language strip; use header language menu instead. */
+  hideCompactLanguageStrip?: boolean;
+  /** Increment to resync anonymous id / language state from localStorage after external changes. */
+  languageSyncNonce?: number;
+  onNeedsLanguageChange?: (needs: boolean) => void;
 };
 
 export default function AnonymousSaathiPanel({
   variant,
   layoutEmbedded = false,
+  hideCompactLanguageStrip = false,
+  languageSyncNonce,
+  onNeedsLanguageChange,
 }: Props) {
+  const router = useRouter();
   const [messages, setMessages] = useState<
     { role: "user" | "assistant"; content: string; agentType?: string }[]
   >([]);
@@ -40,13 +50,10 @@ export default function AnonymousSaathiPanel({
   const [missingConvex, setMissingConvex] = useState(false);
   const [needsLanguage, setNeedsLanguage] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const previousSaathiIdRef = useRef<string | null>(null);
+  const languageSyncSkipRef = useRef(true);
 
   const sendMessage = useAction(api.patientChat.sendMessage);
-  const moodData = useQuery(
-    api.moodLogs.getRecentForPatient,
-    anonymousId ? { anonymousId } : "skip"
-  );
+  const getOrCreatePatient = useMutation(api.patients.getOrCreatePatient);
 
   const syncIdAndWelcome = useCallback(() => {
     const id = localStorage.getItem("saathi_id") ?? "";
@@ -82,17 +89,50 @@ export default function AnonymousSaathiPanel({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, needsLanguage]);
 
+  useEffect(() => {
+    onNeedsLanguageChange?.(needsLanguage);
+  }, [needsLanguage, onNeedsLanguageChange]);
+
+  useEffect(() => {
+    if (languageSyncNonce === undefined) return;
+    if (languageSyncSkipRef.current) {
+      languageSyncSkipRef.current = false;
+      return;
+    }
+    const id =
+      typeof window !== "undefined" ? localStorage.getItem("saathi_id") ?? "" : "";
+    if (!id) {
+      setNeedsLanguage(true);
+      setAnonymousId("");
+      setMessages([]);
+      setSessionId(undefined);
+    } else {
+      setNeedsLanguage(false);
+      syncIdAndWelcome();
+    }
+  }, [languageSyncNonce, syncIdAndWelcome]);
+
   const handleLanguageReady = () => {
-    previousSaathiIdRef.current = null;
     syncIdAndWelcome();
   };
 
+  const handlePickLanguage = useCallback(
+    async (language: string) => {
+      let id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `saathi_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const existing = localStorage.getItem("saathi_id");
+      if (existing) id = existing;
+      else localStorage.setItem("saathi_id", id);
+      await getOrCreatePatient({ anonymousId: id, language });
+      setNeedsLanguage(false);
+      syncIdAndWelcome();
+    },
+    [getOrCreatePatient, syncIdAndWelcome]
+  );
+
   const handleChangeLanguage = () => {
-    try {
-      previousSaathiIdRef.current = localStorage.getItem("saathi_id");
-    } catch {
-      previousSaathiIdRef.current = null;
-    }
     localStorage.removeItem("saathi_id");
     setAnonymousId("");
     setNeedsLanguage(true);
@@ -100,30 +140,17 @@ export default function AnonymousSaathiPanel({
     setSessionId(undefined);
   };
 
-  const cancelLanguagePicker = useCallback(() => {
-    const prev = previousSaathiIdRef.current;
-    if (prev) {
-      try {
-        localStorage.setItem("saathi_id", prev);
-      } catch {
-        /* ignore */
-      }
-      previousSaathiIdRef.current = null;
-      setNeedsLanguage(false);
-      syncIdAndWelcome();
-    } else {
-      setNeedsLanguage(false);
-    }
-  }, [syncIdAndWelcome]);
+  const handleLeaveFullPageChat = useCallback(() => {
+    router.push("/");
+  }, [router]);
 
-  useEffect(() => {
-    if (!needsLanguage || variant !== "full") return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cancelLanguagePicker();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [needsLanguage, variant, cancelLanguagePicker]);
+  const handleCloseFullPageChat = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  }, [router]);
 
   const handleSend = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -132,7 +159,8 @@ export default function AnonymousSaathiPanel({
         ...prev,
         {
           role: "assistant",
-          content: "Choose a language above to start chatting.",
+          content:
+            "Choose a language from the header: hover or tap the language icon, then pick English, हिंदी, اردو, or کٲشُر.",
         },
       ]);
       return;
@@ -191,113 +219,74 @@ export default function AnonymousSaathiPanel({
 
   const surfaceClass =
     variant === "full"
-      ? `${styles.surface} ${layoutEmbedded ? styles.flexColInLayout : styles.flexColScreen}`
+      ? `${styles.surface} ${
+          layoutEmbedded
+            ? styles.flexColInLayout
+            : `${styles.flexColScreen} ${styles.surfaceGradientScreen}`
+        }`
       : `${styles.surface} ${styles.flexColCompact}`;
+
+  const showLangHeaderHint =
+    needsLanguage &&
+    messages.length === 0 &&
+    (variant === "full" || (variant === "compact" && hideCompactLanguageStrip));
 
   return (
     <div className={surfaceClass}>
       {variant === "full" && (
-        <header className={styles.header}>
-          <div className={styles.headerAvatar} aria-hidden>
-            <span className={styles.headerHeartbeat}>
-              <Activity size={20} strokeWidth={2.5} />
-            </span>
+        <header className={`${styles.header} ${styles.headerSurfaceGradient}`}>
+          <div className={styles.headerLead}>
+            <div className={styles.headerAvatar} aria-hidden>
+              <span className={styles.headerHeartbeat}>
+                <Activity size={20} strokeWidth={2.5} />
+              </span>
+            </div>
+            <div className={styles.headerBrand}>
+              <p className={styles.headerTitle}>Saathi • Your Health Companion</p>
+              <p className={styles.headerSub}>Mental health companion · Anonymous</p>
+            </div>
           </div>
-          <div className={styles.headerBrand}>
-            <p className={styles.headerTitle}>Saathi • Your Health Companion</p>
-            <p className={styles.headerSub}>Mental health companion · Anonymous</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleChangeLanguage}
-            className={styles.headerLink}
-            style={{ cursor: "pointer", fontFamily: "inherit" }}
-            aria-expanded={needsLanguage}
-            aria-haspopup="dialog"
-          >
-            Language
-          </button>
-          <Link href="/" className={styles.headerLinkMuted}>
-            Home
-          </Link>
+          <SaathiHeaderToolbar
+            mode="anonymous"
+            onToggleMode={() => router.push("/chat/memory")}
+            centerAction="minimize"
+            onCenterClick={handleLeaveFullPageChat}
+            onClose={handleCloseFullPageChat}
+            languageMenu={{
+              onSelectLanguage: handlePickLanguage,
+              onRequestClear: handleChangeLanguage,
+              needsAttention: needsLanguage,
+            }}
+            showHomeLink
+          />
         </header>
       )}
 
-      {moodData && moodData.length >= 2 && (
-        <div style={{ padding: "6px 16px", borderBottom: "1px solid #e8e4de", background: "#fff" }}>
-          <MoodSparkline data={moodData} />
-        </div>
-      )}
-
-      {needsLanguage && variant === "compact" && (
-        <div
-          style={{
-            flexShrink: 0,
-            borderBottom: "1px solid #e8e4de",
-            background: "#fff",
-          }}
-        >
+      {needsLanguage && variant === "compact" && !hideCompactLanguageStrip && (
+        <div className={styles.languageGateStrip}>
           <SaathiLanguageGate onReady={handleLanguageReady} compact />
         </div>
       )}
 
       {crisisDetected && <CrisisBanner />}
 
-      <div className={styles.chatMain}>
-        {needsLanguage && variant === "full" && (
-          <div
-            className={styles.langOverlay}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="saathi-lang-dialog-title"
-          >
-            <button
-              type="button"
-              className={styles.langOverlayBackdrop}
-              aria-label="Close language picker"
-              onClick={cancelLanguagePicker}
-            />
-            <div
-              className={styles.langOverlayCard}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                className={styles.langOverlayClose}
-                onClick={cancelLanguagePicker}
-                aria-label="Close"
-              >
-                ×
-              </button>
-              <h2 id="saathi-lang-dialog-title" className={styles.langOverlayTitle}>
-                Choose language
-              </h2>
-              <p className={styles.langOverlaySub}>
-                You remain on Saathi. Pick a language to continue chatting.
-              </p>
-              <SaathiLanguageGate
-                onReady={handleLanguageReady}
-                compact={false}
-                showHeading={false}
-                showFooterCrisis
-              />
-            </div>
-          </div>
-        )}
-
-        <div className={styles.messages}>
-          {messages.map((msg, i) => (
-            <ChatBubble
-              key={i}
-              role={msg.role}
-              content={msg.content}
-              agentType={msg.agentType}
-            />
-          ))}
-          {loading && <TypingIndicator />}
-          <div ref={bottomRef} />
-        </div>
+      <div className={styles.messages}>
+        {showLangHeaderHint ? (
+          <p className={styles.langEmptyHint}>
+            Hover or tap the <strong>language icon</strong> in the header to open a compact menu —
+            then choose your language to begin.
+          </p>
+        ) : null}
+        {messages.map((msg, i) => (
+          <ChatBubble
+            key={i}
+            role={msg.role}
+            content={msg.content}
+            agentType={msg.agentType}
+          />
+        ))}
+        {loading && <TypingIndicator />}
+        <div ref={bottomRef} />
       </div>
 
       <ChatInput

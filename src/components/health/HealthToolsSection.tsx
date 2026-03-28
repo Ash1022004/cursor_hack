@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type TargetAndTransition, type Transition } from "framer-motion";
 import {
   Activity,
   Pill,
@@ -66,7 +66,7 @@ const tools = [
 function iconAnimate(
   key: (typeof tools)[number]["iconMotion"],
   reduce: boolean
-): { animate?: object; transition?: object } {
+): { animate?: TargetAndTransition; transition?: Transition } {
   if (reduce) return {};
   switch (key) {
     case "heartbeat":
@@ -146,8 +146,8 @@ export default function HealthToolsSection() {
                   <div className={`${contactStyles.contactIcon} ${styles.iconShell}`}>
                     <motion.span
                       className={styles.floatingIcon}
-                      animate={"animate" in ia ? ia.animate : undefined}
-                      transition={"transition" in ia ? ia.transition : undefined}
+                      animate={ia.animate}
+                      transition={ia.transition}
                     >
                       <Icon size={32} strokeWidth={2} className={styles.cardLucide} />
                     </motion.span>

@@ -5,7 +5,16 @@ import Link from "next/link";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useQuery } from "convex/react";
 import { api } from "@cvx/_generated/api";
+import type { Id } from "@cvx/_generated/dataModel";
 import { Users, MessageSquare, Calendar, AlertTriangle, TrendingUp, Shield } from "lucide-react";
+
+type RecentSessionRow = {
+  id: Id<"sessions">;
+  patientId: Id<"patients">;
+  startedAt: number;
+  messageCount: number;
+  dominantEmotion: string | null;
+};
 
 /* ── Admin theme ─────────────────────────── */
 const ACCENT = "#1d4ed8";
@@ -161,7 +170,7 @@ const AdminDashboardPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {overview.recentSessions.map((s) => (
+                    {overview.recentSessions.map((s: RecentSessionRow) => (
                       <tr key={s.id}>
                         <td style={td}>{new Date(s.startedAt).toLocaleDateString()}</td>
                         <td style={td}>{s.messageCount}</td>

@@ -1,0 +1,43 @@
+.chart {
+  display: block;
+  flex-shrink: 0;
+}
+
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(241, 245, 249, 0.92) 100%
+  );
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+[data-theme="dark"] .wrap {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 41, 59, 0.92) 0%,
+    rgba(15, 23, 42, 0.88) 100%
+  );
+  border-color: rgba(52, 211, 153, 0.2);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+[data-theme="dark"] .label {
+  color: #f1f5f9;
+}

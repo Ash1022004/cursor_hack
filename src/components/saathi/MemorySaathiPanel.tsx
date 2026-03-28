@@ -1,15 +1,16 @@
 "use client";
 
-import { useAction, useQuery } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "@cvx/_generated/api";
 import type { Id } from "@cvx/_generated/dataModel";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Bot } from "lucide-react";
 import ChatBubble from "@/components/saathi/ChatBubble";
 import ChatInput from "@/components/saathi/ChatInput";
 import CrisisBanner from "@/components/saathi/CrisisBanner";
-import MoodSparkline from "@/components/saathi/MoodSparkline";
+import SaathiHeaderToolbar from "@/components/saathi/SaathiHeaderToolbar";
 import VoiceJournalButton from "@/components/saathi/VoiceJournalButton";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import styles from "@/styles/components/saathi-chat.module.css";
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export default function MemorySaathiPanel({ variant }: Props) {
+  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<
     { role: "user" | "assistant"; content: string; agentType?: string }[]
@@ -42,11 +44,6 @@ export default function MemorySaathiPanel({ variant }: Props) {
   const loginHref = `/login?returnUrl=${encodeURIComponent("/chat/memory")}`;
 
   const anonymousId = user ? `jwt:${user._id}` : "";
-
-  const moodData = useQuery(
-    api.moodLogs.getRecentForPatient,
-    anonymousId ? { anonymousId } : "skip"
-  );
 
   const WELCOME = user
     ? `Hi ${user.firstName}! I'm Saathi, your mental health companion. Your conversations are remembered so I can support you better over time. How are you feeling today?`
@@ -69,6 +66,18 @@ export default function MemorySaathiPanel({ variant }: Props) {
       setSessionId(stored as Id<"sessions">);
     }
   }, [anonymousId]);
+
+  const handleLeaveFullPageChat = useCallback(() => {
+    router.push("/");
+  }, [router]);
+
+  const handleCloseFullPageChat = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  }, [router]);
 
   useEffect(() => {
     let mounted = true;
@@ -166,7 +175,7 @@ export default function MemorySaathiPanel({ variant }: Props) {
               Sign in
             </Link>
             <p className={uiStyles.memoryGateFoot}>
-              Or switch to <strong>Anonymous</strong> in the tab above for a private chat without
+              Or tap the <strong>ghost icon</strong> in the chat header for Anonymous chat without
               an account.
             </p>
           </div>
@@ -190,9 +199,15 @@ export default function MemorySaathiPanel({ variant }: Props) {
           </div>
         </div>
         {variant === "full" && (
-          <Link href="/" className={uiStyles.chatHeaderLink}>
-            Home
-          </Link>
+          <SaathiHeaderToolbar
+            chrome="onGradient"
+            mode="memory"
+            onToggleMode={() => router.push("/chat")}
+            centerAction="minimize"
+            onCenterClick={handleLeaveFullPageChat}
+            onClose={handleCloseFullPageChat}
+            showHomeLink
+          />
         )}
       </div>
 
@@ -217,18 +232,6 @@ export default function MemorySaathiPanel({ variant }: Props) {
           <option value="relationships">Relationships</option>
         </select>
       </div>
-
-      {moodData && moodData.length >= 2 && (
-        <div
-          style={{
-            padding: "6px 16px",
-            borderBottom: "1px solid #e8e4de",
-            background: "#fff",
-          }}
-        >
-          <MoodSparkline data={moodData} />
-        </div>
-      )}
 
       {crisisDetected && <CrisisBanner />}
 

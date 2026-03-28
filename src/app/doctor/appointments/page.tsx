@@ -5,7 +5,7 @@ import DoctorLayout from "@/components/doctor/DoctorLayout";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@cvx/_generated/api";
 import { useAuth } from "@/context/AuthContext";
-import type { Id } from "@cvx/_generated/dataModel";
+import type { Doc, Id } from "@cvx/_generated/dataModel";
 import { Calendar } from "lucide-react";
 
 const ACCENT = "#059669";
@@ -53,15 +53,17 @@ export default function DoctorAppointmentsPage() {
   const [filter, setFilter] = useState<string>("all");
   const [noteInput, setNoteInput] = useState<Record<string, string>>({});
 
-  const filtered = appointments?.filter((a) => filter === "all" || a.status === filter);
+  const filtered = appointments?.filter(
+    (a: Doc<"appointments">) => filter === "all" || a.status === filter
+  );
 
   const counts = appointments
     ? {
         all: appointments.length,
-        pending: appointments.filter((a) => a.status === "pending").length,
-        confirmed: appointments.filter((a) => a.status === "confirmed").length,
-        completed: appointments.filter((a) => a.status === "completed").length,
-        cancelled: appointments.filter((a) => a.status === "cancelled").length,
+        pending: appointments.filter((a: Doc<"appointments">) => a.status === "pending").length,
+        confirmed: appointments.filter((a: Doc<"appointments">) => a.status === "confirmed").length,
+        completed: appointments.filter((a: Doc<"appointments">) => a.status === "completed").length,
+        cancelled: appointments.filter((a: Doc<"appointments">) => a.status === "cancelled").length,
       }
     : null;
 
@@ -137,7 +139,7 @@ export default function DoctorAppointmentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((a) => {
+                {filtered.map((a: Doc<"appointments">) => {
                   const sm = STATUS_META[a.status] ?? STATUS_META.pending;
                   return (
                     <tr key={a._id}>

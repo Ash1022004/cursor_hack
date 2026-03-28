@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {

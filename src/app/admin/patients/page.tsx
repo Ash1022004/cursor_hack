@@ -4,7 +4,23 @@ import React, { useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useQuery } from "convex/react";
 import { api } from "@cvx/_generated/api";
+import type { Id } from "@cvx/_generated/dataModel";
 import { Search, AlertTriangle, UserCheck } from "lucide-react";
+
+type AdminPatientRow = {
+  _id: Id<"patients">;
+  anonymousId: string;
+  conditions: string[];
+  medications: string[];
+  triggers: string[];
+  copingPatterns: string[];
+  crisisFlag: boolean;
+  totalSessions: number;
+  lastSeen: number;
+  lastMoodScore: number | null;
+  lastEmotion: string | null;
+  sessionCount: number;
+};
 
 const ACCENT = "#1d4ed8";
 const ACCENT_LIGHT = "#eff6ff";
@@ -37,9 +53,9 @@ export default function AdminPatientsPage() {
   const [search, setSearch] = useState("");
 
   const filtered = patients?.filter(
-    (p) =>
+    (p: AdminPatientRow) =>
       p.anonymousId.toLowerCase().includes(search.toLowerCase()) ||
-      p.conditions.some((c) => c.toLowerCase().includes(search.toLowerCase()))
+      p.conditions.some((c: string) => c.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -97,7 +113,7 @@ export default function AdminPatientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p) => (
+                {filtered.map((p: AdminPatientRow) => (
                   <tr key={p._id} style={{ transition: "background 0.1s" }}>
                     <td style={td}>
                       <code style={{ fontSize: 12, background: ACCENT_LIGHT, padding: "2px 6px", borderRadius: 4, color: ACCENT }}>

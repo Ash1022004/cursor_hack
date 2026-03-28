@@ -1,11 +1,15 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useMutation } from "convex/react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Activity, Maximize2, MessageCircle, Sparkles, X } from "lucide-react";
+import { Activity, MessageCircle, Sparkles } from "lucide-react";
+import { api } from "@cvx/_generated/api";
 import AnonymousSaathiPanel from "@/components/saathi/AnonymousSaathiPanel";
 import MemorySaathiPanel from "@/components/saathi/MemorySaathiPanel";
+import SaathiHeaderToolbar from "@/components/saathi/SaathiHeaderToolbar";
+import { useAuth } from "@/context/AuthContext";
 import dockStyles from "./SaathiChatDock.module.css";
 
 type ChatMode = "anonymous" | "memory";
@@ -13,11 +17,47 @@ type ChatMode = "anonymous" | "memory";
 export default function SaathiChatDock() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+  const getOrCreatePatient = useMutation(api.patients.getOrCreatePatient);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ChatMode>("anonymous");
+  const [langNonce, setLangNonce] = useState(0);
+  const [dockNeedsLanguage, setDockNeedsLanguage] = useState(false);
   const reduceMotion = useReducedMotion();
 
-  if (pathname === "/saathi" || pathname === "/chat/memory") {
+  const handleDockPickLanguage = useCallback(
+    async (language: string) => {
+      let id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `saathi_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const existing =
+        typeof window !== "undefined" ? localStorage.getItem("saathi_id") : null;
+      if (existing) id = existing;
+      else if (typeof window !== "undefined") localStorage.setItem("saathi_id", id);
+      await getOrCreatePatient({ anonymousId: id, language });
+      setDockNeedsLanguage(false);
+      setLangNonce((n) => n + 1);
+    },
+    [getOrCreatePatient]
+  );
+
+  const handleDockClearLanguage = useCallback(() => {
+    if (typeof window !== "undefined") localStorage.removeItem("saathi_id");
+    setDockNeedsLanguage(true);
+    setLangNonce((n) => n + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!open || isLoading) return;
+    setMode(isAuthenticated ? "memory" : "anonymous");
+  }, [open, isAuthenticated, isLoading]);
+
+  if (
+    pathname === "/saathi" ||
+    pathname === "/chat" ||
+    pathname === "/chat/memory"
+  ) {
     return null;
   }
 
@@ -118,39 +158,25 @@ export default function SaathiChatDock() {
             </div>
 
             <div className={dockStyles.sheetHeader}>
-              <div className={dockStyles.modeToggle} role="group" aria-label="Chat mode">
-                <button
-                  type="button"
-                  className={`${dockStyles.modeBtn} ${mode === "anonymous" ? dockStyles.modeBtnActive : ""}`}
-                  onClick={() => setMode("anonymous")}
-                >
-                  Anonymous
-                </button>
-                <button
-                  type="button"
-                  className={`${dockStyles.modeBtn} ${mode === "memory" ? dockStyles.modeBtnActive : ""}`}
-                  onClick={() => setMode("memory")}
-                >
-                  Memory
-                </button>
-              </div>
-              <button
-                type="button"
-                className={dockStyles.iconBtn}
-                onClick={handleMaximize}
-                aria-label="Open chat full screen"
-                title="Full screen"
-              >
-                <Maximize2 size={18} />
-              </button>
-              <button
-                type="button"
-                className={dockStyles.iconBtn}
-                onClick={() => setOpen(false)}
-                aria-label="Close chat"
-              >
-                <X size={18} />
-              </button>
+              <div className={dockStyles.headerSpacer} aria-hidden />
+              <SaathiHeaderToolbar
+                mode={mode}
+                onToggleMode={() =>
+                  setMode((m) => (m === "anonymous" ? "memory" : "anonymous"))
+                }
+                centerAction="maximize"
+                onCenterClick={handleMaximize}
+                onClose={() => setOpen(false)}
+                languageMenu={
+                  mode === "anonymous"
+                    ? {
+                        onSelectLanguage: handleDockPickLanguage,
+                        onRequestClear: handleDockClearLanguage,
+                        needsAttention: dockNeedsLanguage,
+                      }
+                    : undefined
+                }
+              />
             </div>
             <p className={dockStyles.subline}>
               {mode === "anonymous"
@@ -162,7 +188,12 @@ export default function SaathiChatDock() {
               style={{ display: mode === "anonymous" ? "flex" : "none" }}
               aria-hidden={mode !== "anonymous"}
             >
-              <AnonymousSaathiPanel variant="compact" />
+              <AnonymousSaathiPanel
+                variant="compact"
+                hideCompactLanguageStrip
+                languageSyncNonce={langNonce}
+                onNeedsLanguageChange={setDockNeedsLanguage}
+              />
             </div>
             <div
               className={dockStyles.sheetBody}

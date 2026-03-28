@@ -5,7 +5,17 @@ import Link from "next/link";
 import DoctorLayout from "@/components/doctor/DoctorLayout";
 import { useQuery } from "convex/react";
 import { api } from "@cvx/_generated/api";
+import type { Id } from "@cvx/_generated/dataModel";
 import { useAuth } from "@/context/AuthContext";
+
+type DoctorUpcomingAppointment = {
+  id: Id<"appointments">;
+  guestName: string | null;
+  guestEmail: string | null;
+  preferredDate: string | null;
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  department: string | null;
+};
 import { Users, Calendar, AlertTriangle, CheckCircle, Clock, Stethoscope } from "lucide-react";
 
 /* ── Doctor theme ─────────────────────── */
@@ -132,7 +142,7 @@ export default function DoctorDashboardPage() {
                 <p style={{ color: "#9ca3af", fontSize: 13, margin: 0 }}>No upcoming appointments.</p>
               ) : (
                 <div style={{ display: "grid", gap: 8 }}>
-                  {overview.upcomingAppointments.map((a) => {
+                  {overview.upcomingAppointments.map((a: DoctorUpcomingAppointment) => {
                     const sm = STATUS_META[a.status] ?? STATUS_META.pending;
                     return (
                       <div

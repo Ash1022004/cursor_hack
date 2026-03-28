@@ -5,7 +5,23 @@ import Link from "next/link";
 import DoctorLayout from "@/components/doctor/DoctorLayout";
 import { useQuery } from "convex/react";
 import { api } from "@cvx/_generated/api";
+import type { Id } from "@cvx/_generated/dataModel";
 import { useAuth } from "@/context/AuthContext";
+
+type DoctorPatientRow = {
+  _id: Id<"patients">;
+  anonymousId: string;
+  conditions: string[];
+  medications: string[];
+  triggers: string[];
+  copingPatterns: string[];
+  crisisFlag: boolean;
+  totalSessions: number;
+  lastSeen: number;
+  lastMoodScore: number | null;
+  lastEmotion: string | null;
+  sessionCount: number;
+};
 import { Search, AlertTriangle, Users } from "lucide-react";
 
 const ACCENT = "#059669";
@@ -43,9 +59,9 @@ export default function DoctorPatientsPage() {
   const [search, setSearch] = useState("");
 
   const filtered = patients?.filter(
-    (p) =>
+    (p: DoctorPatientRow) =>
       p.anonymousId.toLowerCase().includes(search.toLowerCase()) ||
-      p.conditions.some((c) => c.toLowerCase().includes(search.toLowerCase()))
+      p.conditions.some((c: string) => c.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -106,7 +122,7 @@ export default function DoctorPatientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p) => (
+                {filtered.map((p: DoctorPatientRow) => (
                   <tr key={p._id}>
                     <td style={td}>
                       <code style={{ fontSize: 11, background: ACCENT_LIGHT, padding: "2px 6px", borderRadius: 4, color: ACCENT }}>
@@ -115,7 +131,7 @@ export default function DoctorPatientsPage() {
                     </td>
                     <td style={td}>
                       <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                        {p.conditions.slice(0, 3).map((c, i) => (
+                        {p.conditions.slice(0, 3).map((c: string, i: number) => (
                           <span key={i} style={chip("#065f46", "#d1fae5")}>{c}</span>
                         ))}
                         {p.conditions.length > 3 && (

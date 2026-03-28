@@ -4,6 +4,17 @@ import React, { useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@cvx/_generated/api";
+import type { Doc } from "@cvx/_generated/dataModel";
+
+type AdminAppointmentRow = Doc<"appointments"> & {
+  counsellorName?: string | null;
+};
+
+type CounsellorOption = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+};
 
 const ACCENT = "#1d4ed8";
 const ACCENT_LIGHT = "#eff6ff";
@@ -34,15 +45,17 @@ export default function AdminAppointmentsPage() {
   const assignCounsellor = useMutation(api.guestAppointments.assignCounsellor);
   const [filter, setFilter] = useState<string>("all");
 
-  const filtered = appointments?.filter((a) => filter === "all" || a.status === filter);
+  const filtered = appointments?.filter(
+    (a: AdminAppointmentRow) => filter === "all" || a.status === filter
+  );
 
   const counts = appointments
     ? {
         all: appointments.length,
-        pending: appointments.filter((a) => a.status === "pending").length,
-        confirmed: appointments.filter((a) => a.status === "confirmed").length,
-        completed: appointments.filter((a) => a.status === "completed").length,
-        cancelled: appointments.filter((a) => a.status === "cancelled").length,
+        pending: appointments.filter((a: AdminAppointmentRow) => a.status === "pending").length,
+        confirmed: appointments.filter((a: AdminAppointmentRow) => a.status === "confirmed").length,
+        completed: appointments.filter((a: AdminAppointmentRow) => a.status === "completed").length,
+        cancelled: appointments.filter((a: AdminAppointmentRow) => a.status === "cancelled").length,
       }
     : null;
 
@@ -108,7 +121,7 @@ export default function AdminAppointmentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((a) => {
+                {filtered.map((a: AdminAppointmentRow) => {
                   const sm = STATUS_META[a.status] ?? STATUS_META.pending;
                   return (
                     <tr key={a._id}>
@@ -149,7 +162,7 @@ export default function AdminAppointmentsPage() {
                             }}
                           >
                             <option value="">Assign counsellor…</option>
-                            {counsellors?.map((c) => (
+                            {counsellors?.map((c: CounsellorOption) => (
                               <option key={c._id} value={c._id}>
                                 {c.firstName} {c.lastName}
                               </option>

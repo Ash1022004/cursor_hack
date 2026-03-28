@@ -1,0 +1,13 @@
+.moodSection {
+  width: 100%;
+  max-width: min(42rem, calc(100vw - 2 * var(--spacing-md, 1rem)));
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem) clamp(0.75rem, 3vw, 1.5rem);
+  box-sizing: border-box;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-hero-fade) 55%, transparent) 0%,
+    transparent 35%,
+    color-mix(in srgb, var(--surface-features-top) 40%, transparent) 100%
+  );
+}

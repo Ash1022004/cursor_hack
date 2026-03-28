@@ -1,5 +1,7 @@
 "use client";
 
+import styles from "./MoodSparkline.module.css";
+
 type MoodPoint = { score: number; emotion: string; date: number };
 
 interface Props {
@@ -31,22 +33,13 @@ export default function MoodSparkline({ data }: Props) {
   const color = `hsl(${hue}, 70%, 45%)`;
 
   return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "2px 8px",
-        borderRadius: 8,
-        background: "#f8f6f2",
-        border: "1px solid #e8e4de",
-      }}
-    >
+    <div className={styles.wrap}>
       <svg
         width={W}
         height={H}
         viewBox={`0 0 ${W} ${H}`}
-        style={{ display: "block" }}
+        className={styles.chart}
+        aria-hidden
       >
         <polyline
           points={polyline}
@@ -58,9 +51,7 @@ export default function MoodSparkline({ data }: Props) {
         />
         <circle cx={last.x} cy={last.y} r={2.5} fill={color} />
       </svg>
-      <span style={{ fontSize: 11, color: "#6b6b6b", whiteSpace: "nowrap" }}>
-        Mood {last.score}/10
-      </span>
+      <span className={styles.label}>Mood {last.score}/10</span>
     </div>
   );
 }

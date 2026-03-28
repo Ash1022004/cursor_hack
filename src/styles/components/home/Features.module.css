@@ -1,6 +1,11 @@
 .features {
   padding: var(--spacing-3xl) 0;
-  background: var(--page-bg);
+  background: linear-gradient(
+    180deg,
+    var(--surface-features-top) 0%,
+    var(--page-bg) min(18%, 7rem),
+    var(--page-bg) 100%
+  );
 }
 
 .container {

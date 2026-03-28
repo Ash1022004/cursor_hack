@@ -371,6 +371,7 @@ const Hero: React.FC = () => {
         </div>
       </div>
 
+      <div className={styles.sectionEdgeFade} aria-hidden />
     </section>
   );
 };

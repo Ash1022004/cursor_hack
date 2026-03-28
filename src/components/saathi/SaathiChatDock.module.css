@@ -92,11 +92,13 @@
   gap: 12px;
   padding: 12px 14px 8px;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.75);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 [data-theme="dark"] .brandRow {
-  border-bottom-color: rgba(51, 65, 85, 0.6);
+  border-bottom-color: rgba(51, 65, 85, 0.55);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .brandIcon {
@@ -156,8 +158,14 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px 10px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 8px 12px 10px;
+}
+
+.headerSpacer {
+  flex: 1;
+  min-width: 0;
 }
 
 .subline {
@@ -167,80 +175,21 @@
   line-height: 1.45;
   color: #64748b;
   border-bottom: 1px solid rgba(226, 232, 240, 0.75);
-  background: rgba(248, 250, 252, 0.65);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0.5) 0%,
+    rgba(248, 250, 252, 0.85) 100%
+  );
 }
 
 [data-theme="dark"] .subline {
-  color: #94a3b8;
-  background: rgba(15, 23, 42, 0.5);
+  color: #e2e8f0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.35) 0%,
+    rgba(30, 41, 59, 0.65) 100%
+  );
   border-bottom-color: rgba(51, 65, 85, 0.55);
-}
-
-.modeToggle {
-  display: flex;
-  flex: 1;
-  background: rgba(241, 245, 249, 0.95);
-  border-radius: 12px;
-  padding: 3px;
-  gap: 2px;
-}
-
-[data-theme="dark"] .modeToggle {
-  background: rgba(30, 41, 59, 0.85);
-}
-
-.modeBtn {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 10px;
-  border-radius: 9px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-[data-theme="dark"] .modeBtn {
-  color: #94a3b8;
-}
-
-.modeBtnActive {
-  background: #fff;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-}
-
-[data-theme="dark"] .modeBtnActive {
-  background: rgba(51, 65, 85, 0.95);
-  color: #f1f5f9;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-}
-
-.iconBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(248, 250, 252, 0.9);
-  color: #475569;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-[data-theme="dark"] .iconBtn {
-  background: rgba(30, 41, 59, 0.9);
-  color: #cbd5e1;
-}
-
-.iconBtn:hover {
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--primary-700);
 }
 
 .sheetBody {

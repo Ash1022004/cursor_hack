@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Layout from "@/components/layout/Layout";
 import { fetchHospitals, type AppointmentHospitalOption } from "@/lib/apifyHospitals";
@@ -16,6 +16,9 @@ type Doctor = { id: string; name: string; specialty: string; department?: string
 const ACCENT = "#7c3aed";
 const ACCENT_LIGHT = "#f5f3ff";
 const ACCENT_BORDER = "#ddd6fe";
+
+/** Default state for Apify hospital fetch when user taps “Load all”. */
+const DEFAULT_HOSPITAL_STATE = "Maharashtra";
 
 const card: React.CSSProperties = {
   background: "#fff",
@@ -51,7 +54,7 @@ export default function HospitalFinderPage() {
     setLoading(true);
     setError(null);
     try {
-      const rows = await fetchHospitals();
+      const rows = await fetchHospitals(DEFAULT_HOSPITAL_STATE);
       setHospitals(rows);
       setLoaded(true);
     } catch {

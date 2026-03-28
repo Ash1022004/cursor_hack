@@ -1,5 +1,10 @@
 .footer {
-  background: var(--footer-bg);
+  background: linear-gradient(
+    180deg,
+    var(--surface-footer-top) 0%,
+    var(--footer-bg) min(12%, 4.5rem),
+    var(--footer-bg) 100%
+  );
   color: var(--footer-text);
   margin-top: auto;
 }
