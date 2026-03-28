@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Maximize2, MessageCircle, Sparkles, X } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Activity, Maximize2, MessageCircle, Sparkles, X } from "lucide-react";
 import AnonymousSaathiPanel from "@/components/saathi/AnonymousSaathiPanel";
 import MemorySaathiPanel from "@/components/saathi/MemorySaathiPanel";
 import dockStyles from "./SaathiChatDock.module.css";
@@ -15,6 +15,7 @@ export default function SaathiChatDock() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ChatMode>("anonymous");
+  const reduceMotion = useReducedMotion();
 
   if (pathname === "/chat" || pathname === "/chat/memory") {
     return null;
@@ -84,7 +85,38 @@ export default function SaathiChatDock() {
             aria-label="Close chat"
             onClick={() => setOpen(false)}
           />
-          <div className={dockStyles.sheet} role="dialog" aria-label="Sehat-Saathi chat">
+          <motion.div
+            className={dockStyles.sheet}
+            role="dialog"
+            aria-label="Sehat-Saathi chat"
+            initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className={dockStyles.brandRow}>
+              <div className={dockStyles.brandIcon} aria-hidden>
+                <motion.span
+                  className={dockStyles.heartbeat}
+                  animate={
+                    reduceMotion
+                      ? undefined
+                      : { scale: [1, 1.1, 1, 1.06, 1] }
+                  }
+                  transition={{
+                    duration: 1.35,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Activity size={20} strokeWidth={2.25} />
+                </motion.span>
+              </div>
+              <div className={dockStyles.brandText}>
+                <p className={dockStyles.brandTitle}>Saathi • Your Health Companion</p>
+                <p className={dockStyles.brandSubtitle}>Calm, private support</p>
+              </div>
+            </div>
+
             <div className={dockStyles.sheetHeader}>
               <div className={dockStyles.modeToggle} role="group" aria-label="Chat mode">
                 <button
@@ -120,16 +152,7 @@ export default function SaathiChatDock() {
                 <X size={18} />
               </button>
             </div>
-            <p
-              style={{
-                margin: 0,
-                padding: "6px 12px 8px",
-                fontSize: 11,
-                color: "#8a8a8a",
-                background: "#fff",
-                borderBottom: "1px solid #e8e4de",
-              }}
-            >
+            <p className={dockStyles.subline}>
               {mode === "anonymous"
                 ? "Private device ID only — no account."
                 : "Signed-in companion with conversation memory."}
@@ -148,7 +171,7 @@ export default function SaathiChatDock() {
             >
               <MemorySaathiPanel variant="compact" />
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </>

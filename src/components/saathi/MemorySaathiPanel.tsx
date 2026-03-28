@@ -154,65 +154,34 @@ export default function MemorySaathiPanel({ variant }: Props) {
   if (!isAuthenticated) {
     return (
       <div className={containerClass}>
-        <div className={styles.chatHeader}>
-          <div className={styles.botInfo}>
-            <Bot className={styles.botIcon} />
-            <div>
-              <h3>Sehat-Saathi</h3>
-              <span className={styles.status} style={{ color: "#6b7280" }}>
-                Sign in to continue
-              </span>
+        <div className={styles.memoryGate}>
+          <div className={styles.memoryGateTop}>
+            <div className={styles.memoryGateIcon} aria-hidden>
+              <Bot size={22} strokeWidth={2} />
             </div>
+            <div className={styles.memoryGateTitles}>
+              <h2 className={styles.memoryGateTitle}>Sehat-Saathi</h2>
+              <p className={styles.memoryGateSubtitle}>Memory · Sign in to continue</p>
+            </div>
+            {variant === "full" && (
+              <Link href="/" className={styles.memoryGateHome}>
+                Home
+              </Link>
+            )}
           </div>
-          {variant === "full" && (
-            <Link
-              href="/"
-              style={{
-                fontSize: 13,
-                color: "rgba(255,255,255,0.9)",
-                textDecoration: "none",
-                fontWeight: 500,
-              }}
-            >
-              Home
+          <div className={styles.memoryGateBody}>
+            <p className={styles.memoryGateCopy}>
+              Memory mode remembers your conversation when you&apos;re signed in, so
+              Saathi can stay consistent with you over time.
+            </p>
+            <Link href={loginHref} className={styles.memoryGateCta}>
+              Sign in
             </Link>
-          )}
-        </div>
-        <div
-          style={{
-            flex: 1,
-            padding: "1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: 16,
-            background: "#f8fafc",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: 14, color: "#374151", lineHeight: 1.5 }}>
-            Memory mode remembers your conversation context when you are signed
-            in. Sign in to chat with your personal Sehat-Saathi.
-          </p>
-          <Link
-            href={loginHref}
-            style={{
-              display: "inline-block",
-              textAlign: "center",
-              background: "var(--primary-600)",
-              color: "#fff",
-              padding: "12px 20px",
-              borderRadius: "var(--radius-lg)",
-              textDecoration: "none",
-              fontWeight: 600,
-              fontSize: 14,
-            }}
-          >
-            Sign in
-          </Link>
-          <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
-            Or use <strong>Anonymous</strong> mode for a private chat without an
-            account.
-          </p>
+            <p className={styles.memoryGateFoot}>
+              Or switch to <strong>Anonymous</strong> in the tab above for a private chat
+              without an account.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -220,44 +189,27 @@ export default function MemorySaathiPanel({ variant }: Props) {
 
   return (
     <div className={containerClass}>
-      <div className={styles.chatHeader}>
+      <div className={`${styles.chatHeader} ${styles.chatHeaderMemory}`}>
         <div className={styles.botInfo}>
           <Bot className={styles.botIcon} />
           <div>
             <h3>Sehat-Saathi</h3>
             <span
-              className={styles.status}
-              style={{ color: isOnline ? "#10B981" : "#EF4444" }}
+              className={`${styles.status} ${isOnline ? styles.statusOnline : styles.statusOffline}`}
             >
               {isOnline ? "Online" : "Offline"}
             </span>
           </div>
         </div>
         {variant === "full" && (
-          <Link
-            href="/"
-            style={{
-              fontSize: 13,
-              color: "rgba(255,255,255,0.9)",
-              textDecoration: "none",
-              fontWeight: 500,
-            }}
-          >
+          <Link href="/" className={styles.chatHeaderLink}>
             Home
           </Link>
         )}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          padding: "0 16px 8px 16px",
-          flexShrink: 0,
-        }}
-      >
-        <label htmlFor="domain-select-memory" style={{ fontSize: 12, color: "#6b7280" }}>
+      <div className={styles.domainBar}>
+        <label htmlFor="domain-select-memory" className={styles.domainLabel}>
           Topic:
         </label>
         <select
@@ -268,15 +220,7 @@ export default function MemorySaathiPanel({ variant }: Props) {
               e.target.value as "stress" | "burnout" | "career" | "relationships"
             )
           }
-          style={{
-            flex: "0 0 auto",
-            padding: "6px 8px",
-            borderRadius: 8,
-            border: "1px solid #E5E7EB",
-            background: "white",
-            fontSize: 12,
-            color: "#374151",
-          }}
+          className={styles.domainSelect}
           aria-label="Select conversation topic"
         >
           <option value="stress">Stress</option>

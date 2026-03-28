@@ -9,7 +9,7 @@ const RelaxSection: React.FC = () => {
   const reduce = useReducedMotion();
 
   return (
-    <section className={styles.section} aria-labelledby="relax-heading">
+    <section id="relax" className={styles.section} aria-labelledby="relax-heading">
       <div className={styles.inner}>
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 24 }}
