@@ -63,6 +63,9 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
   border-radius: var(--radius-md, 8px);
   border: 1px solid var(--gray-200);
   background: var(--white, #fff);
@@ -90,6 +93,11 @@
   border-color: var(--primary-300, #93c5fd);
   background: var(--primary-50, #eff6ff);
   color: var(--primary-700, #1d4ed8);
+}
+
+.iconBtn svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 .toolbarBadge {
