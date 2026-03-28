@@ -1,35 +1,20 @@
 import React from "react";
 import Link from "next/link";
 import Layout from "@/components/layout/Layout";
-import { Search, Calendar, Camera, Activity } from "lucide-react";
-import styles from "@/styles/pages/Contact.module.css";
-
-const tools = [
-  {
-    href: "/symptom-check",
-    title: "Symptom check",
-    description: "General enquiry based on symptoms, age, and duration.",
-    Icon: Activity,
-  },
-  {
-    href: "/medicines",
-    title: "Medicine information",
-    description: "Search generic information: uses, dosage, precautions.",
-    Icon: Search,
-  },
-  {
-    href: "/appointments",
-    title: "Appointments",
-    description: "Book with a hospital and doctor via your connected appointment API.",
-    Icon: Calendar,
-  },
-  {
-    href: "/verify-medicine",
-    title: "Verify medicine label",
-    description: "Upload a photo; we run OCR and match to our reference list.",
-    Icon: Camera,
-  },
-];
+import HealthToolsSection from "@/components/health/HealthToolsSection";
+import MotionSection from "@/components/ui/MotionSection";
+import {
+  Activity,
+  Stethoscope,
+  Search,
+  Calendar,
+  Camera,
+  ChevronRight,
+  Shield,
+  Sparkles,
+} from "lucide-react";
+import contactStyles from "@/styles/pages/Contact.module.css";
+import heroExtras from "@/styles/components/health/HealthHub.module.css";
 
 export default function HealthHubPage() {
   return (
@@ -37,43 +22,72 @@ export default function HealthHubPage() {
       title="Health Tools - Sehat-Saathi"
       description="General health information tools. Not a substitute for professional care."
     >
-      <div className={styles.contact}>
-        <section className={styles.hero}>
-          <div className={styles.container}>
-            <div className={styles.heroContent}>
-              <h1 className={styles.heroTitle}>Health tools</h1>
-              <p className={styles.heroSubtitle}>
-                Quick access to symptom guidance, medicine lookup, appointments, and label verification.
+      <div className={contactStyles.contact}>
+        <section className={`${contactStyles.hero} ${heroExtras.healthHero}`}>
+          <div className={contactStyles.container}>
+            <div className={contactStyles.heroContent}>
+              <div className={heroExtras.heroIcons} aria-hidden>
+                <Stethoscope size={22} strokeWidth={2} />
+                <Activity size={22} strokeWidth={2} />
+              </div>
+              <h1 className={contactStyles.heroTitle}>Health tools</h1>
+              <p className={contactStyles.heroSubtitle}>
+                Quick access to symptom guidance, medicine lookup, appointments, and label
+                verification.
               </p>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.contactInfo}>
-          <div className={styles.container}>
-            <div className={styles.contactGrid}>
-              {tools.map(({ href, title, description, Icon }) => (
-                <Link key={href} href={href} className={`${styles.contactCard} ${styles.contactCardLink}`}>
-                  <div className={styles.contactIcon}>
-                    <Icon size={32} />
-                  </div>
-                  <h3 className={styles.contactTitle}>{title}</h3>
-                  <p className={styles.contactDescription}>{description}</p>
+              <div className={heroExtras.heroMetaRow} aria-hidden>
+                <span>
+                  <Shield size={14} strokeWidth={2} /> General info
+                </span>
+                <span>
+                  <Sparkles size={14} strokeWidth={2} /> Guided steps
+                </span>
+                <span>
+                  <Activity size={14} strokeWidth={2} /> Not a diagnosis
+                </span>
+              </div>
+              <div className={heroExtras.heroQuickRow}>
+                <Link href="/symptom-check" className={heroExtras.heroChip}>
+                  <Activity size={16} strokeWidth={2} />
+                  Symptom check
+                  <ChevronRight size={14} strokeWidth={2} />
                 </Link>
-              ))}
+                <Link href="/medicines" className={heroExtras.heroChip}>
+                  <Search size={16} strokeWidth={2} />
+                  Medicines
+                  <ChevronRight size={14} strokeWidth={2} />
+                </Link>
+                <Link href="/appointments" className={heroExtras.heroChip}>
+                  <Calendar size={16} strokeWidth={2} />
+                  Appointments
+                  <ChevronRight size={14} strokeWidth={2} />
+                </Link>
+                <Link href="/verify-medicine" className={heroExtras.heroChip}>
+                  <Camera size={16} strokeWidth={2} />
+                  Verify label
+                  <ChevronRight size={14} strokeWidth={2} />
+                </Link>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className={styles.faq}>
-          <div className={styles.container}>
-            <div className={styles.faqItem}>
-              <p className={styles.faqAnswer}>
-                This platform provides general medical information and is not a substitute for professional medical advice.
+        <HealthToolsSection />
+
+        <MotionSection className={contactStyles.faq}>
+          <div className={contactStyles.container}>
+            <div className={contactStyles.faqItem}>
+              <p className={contactStyles.faqAnswer}>
+                This platform provides general medical information and is not a substitute for
+                professional medical advice.{" "}
+                <Link href="/contact" className={contactStyles.healthBackLink}>
+                  Reach out
+                </Link>{" "}
+                if you need human support.
               </p>
             </div>
           </div>
-        </section>
+        </MotionSection>
       </div>
     </Layout>
   );

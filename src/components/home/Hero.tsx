@@ -15,7 +15,6 @@ import {
   Leaf,
 } from "lucide-react";
 import RotatingAffirmation from "./RotatingAffirmation";
-import StickyNotesManager from "../ui/StickyNotesManager";
 import RippleSurface from "../ui/RippleSurface";
 import { useIsMobileMotion } from "@/hooks/useAnimation";
 import { staggerContainer, fadeUpItem } from "@/animations/variants";
@@ -372,7 +371,6 @@ const Hero: React.FC = () => {
         </div>
       </div>
 
-      <StickyNotesManager />
     </section>
   );
 };

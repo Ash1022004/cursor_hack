@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Heart, User, LogIn, UserPlus, Home, Info, BookOpen, MessageCircle, LogOut, Shield, Stethoscope } from 'lucide-react';
+import { Menu, X, Heart, User, UserPlus, Home, Info, BookOpen, MessageCircle, LogOut, Shield, Stethoscope } from 'lucide-react';
 import styles from '../../styles/components/layout/Header.module.css';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
@@ -16,10 +16,10 @@ const Header: React.FC = () => {
   const navigation = [
     { name: 'My Space', href: '/', icon: Home, description: 'Your personal sanctuary' },
     {
-      name: 'Saathi (anonymous)',
+      name: 'Saathi',
       href: '/saathi',
       icon: MessageCircle,
-      description: 'Talk privately — no account',
+      description: 'Saathi • Your Health Companion — talk privately, no account',
     },
     { name: 'Our Story', href: '/about', icon: Info, description: 'Why we care' },
     { name: 'Health Tools', href: '/health', icon: Stethoscope, description: 'Symptoms, medicines & care' },
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.logo}>
           <Link href="/" className={styles.logoLink}>
-            <Heart className={styles.logoIcon} />
+            <Heart className={styles.logoIcon} size={22} strokeWidth={2} />
             <span className={styles.logoText}>Sehat-Saathi</span>
           </Link>
         </div>
@@ -50,7 +50,7 @@ const Header: React.FC = () => {
                     className={`${styles.navLink} ${isActive(item.href) ? styles.active : ''}`}
                     title={item.description}
                   >
-                    <IconComponent size={16} />
+                    <IconComponent size={15} strokeWidth={2} />
                     <span>{item.name}</span>
                   </Link>
                 </li>
@@ -88,15 +88,11 @@ const Header: React.FC = () => {
           ) : (
             <>
               <Link href="/sign-in" className={styles.authButton} title="Counsellor / Admin">
-                <Shield size={18} />
+                <Shield size={16} strokeWidth={2} />
                 Staff
               </Link>
-              <Link href="/login" className={styles.authButton}>
-                <LogIn size={18} />
-                Join In
-              </Link>
               <Link href="/register" className={`${styles.authButton} ${styles.primary}`}>
-                <UserPlus size={18} />
+                <UserPlus size={16} strokeWidth={2} />
                 Start My Journey
               </Link>
             </>
@@ -188,14 +184,6 @@ const Header: React.FC = () => {
                   >
                     <Shield size={18} />
                     Staff sign-in
-                  </Link>
-                  <Link
-                    href="/login"
-                    className={styles.mobileAuthButton}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <LogIn size={18} />
-                    Join In
                   </Link>
                   <Link
                     href="/register"
