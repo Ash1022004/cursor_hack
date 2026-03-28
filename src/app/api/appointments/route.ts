@@ -52,13 +52,9 @@ export async function GET() {
         appointmentProviderConfigured: true,
       });
     } catch (e) {
-      return NextResponse.json(
-        {
-          error: e instanceof Error ? e.message : "Failed to load appointments",
-          appointments: [],
-          disclaimer: MEDICAL_DISCLAIMER,
-        },
-        { status: 502 }
+      console.warn(
+        "[api/appointments] External provider list failed; falling back to Convex",
+        e
       );
     }
   }
@@ -203,15 +199,73 @@ export async function POST(request: Request) {
     );
   }
 
-  const department =
-    typeof body.department === "string" ? body.department.trim() : "";
   const preferredDate =
     typeof body.preferredDate === "string" ? body.preferredDate.trim() : "";
+  const hospitalId =
+    typeof body.hospitalId === "string" ? body.hospitalId.trim() : "";
+  const doctorId =
+    typeof body.doctorId === "string" ? body.doctorId.trim() : "";
+  const indianState =
+    typeof body.indianState === "string" ? body.indianState.trim() : "";
+  const hospitalName =
+    typeof body.hospitalName === "string"
+      ? body.hospitalName.trim()
+      : undefined;
+  const hospitalCity =
+    typeof body.hospitalCity === "string"
+      ? body.hospitalCity.trim()
+      : undefined;
+  const hospitalAddress =
+    typeof body.hospitalAddress === "string"
+      ? body.hospitalAddress.trim()
+      : undefined;
+  const doctorName =
+    typeof body.doctorName === "string" ? body.doctorName.trim() : undefined;
+  const doctorSpecialty =
+    typeof body.doctorSpecialty === "string"
+      ? body.doctorSpecialty.trim()
+      : undefined;
+
+  let department =
+    typeof body.department === "string" ? body.department.trim() : "";
+  let notesOut = notes;
+
+  /** Health appointments page: hospital + doctor (no external provider). */
+  if (hospitalId && doctorId) {
+    if (!name || !email || !phone || !preferredDate) {
+      return NextResponse.json(
+        {
+          error:
+            "name, email, phone, hospitalId, doctorId, and preferredDate are required",
+          disclaimer: MEDICAL_DISCLAIMER,
+        },
+        { status: 422 }
+      );
+    }
+    const deptParts = [doctorSpecialty, hospitalName || hospitalId].filter(
+      Boolean
+    ) as string[];
+    department =
+      deptParts.length > 0 ? deptParts.join(" · ") : "Hospital appointment";
+    const meta = [
+      indianState && `State/UT: ${indianState}`,
+      hospitalName && `Hospital: ${hospitalName}`,
+      hospitalCity && `City: ${hospitalCity}`,
+      hospitalAddress && `Address: ${hospitalAddress}`,
+      `Hospital ID: ${hospitalId}`,
+      doctorName && `Doctor: ${doctorName}`,
+      `Doctor ID: ${doctorId}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    notesOut = [notes, meta].filter(Boolean).join("\n\n---\n");
+  }
 
   if (!name || !email || !department || !preferredDate) {
     return NextResponse.json(
       {
-        error: "name, email, department, and preferredDate are required",
+        error:
+          "name, email, and preferredDate are required; add either department or hospital + doctor selection",
         disclaimer: MEDICAL_DISCLAIMER,
       },
       { status: 422 }
@@ -225,7 +279,7 @@ export async function POST(request: Request) {
       phone,
       department,
       preferredDate,
-      notes,
+      notes: notesOut,
     });
     return NextResponse.json(
       {

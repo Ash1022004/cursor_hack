@@ -12,10 +12,6 @@ function convexHttpBase(): string | null {
   return null;
 }
 
-/**
- * Proxies to Convex HTTP `GET /api/apify/hospitals` so the appointments page always
- * hits a real Next handler (rewrites alone can be empty if CONVEX_SITE_URL was unset at build).
- */
 export async function GET(request: NextRequest) {
   const base = convexHttpBase();
   if (!base) {
@@ -23,14 +19,14 @@ export async function GET(request: NextRequest) {
       {
         error:
           "Missing CONVEX_SITE_URL (or NEXT_PUBLIC_CONVEX_URL with .convex.cloud). Add one to .env.local.",
-        hospitals: [],
+        doctors: [],
       },
       { status: 503 }
     );
   }
 
   const qs = request.nextUrl.search;
-  const url = `${base}/api/apify/hospitals${qs}`;
+  const url = `${base}/api/apify/doctors${qs}`;
   try {
     const res = await fetch(url, {
       cache: "no-store",
@@ -44,12 +40,12 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (e) {
-    console.error("[api/apify/hospitals] Convex proxy failed", e);
+    console.error("[api/apify/doctors] Convex proxy failed", e);
     return NextResponse.json(
       {
         error:
           "Could not reach Convex at CONVEX_SITE_URL. Is `npx convex dev` running and the URL correct?",
-        hospitals: [],
+        doctors: [],
       },
       { status: 502 }
     );

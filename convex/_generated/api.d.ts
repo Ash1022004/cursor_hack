@@ -14,6 +14,7 @@ import type * as agents_types from "../agents/types.js";
 import type * as chatbotNode from "../chatbotNode.js";
 import type * as counsellors from "../counsellors.js";
 import type * as dashboard from "../dashboard.js";
+import type * as doctorsNode from "../doctorsNode.js";
 import type * as guestAppointments from "../guestAppointments.js";
 import type * as helplines from "../helplines.js";
 import type * as hospitalsNode from "../hospitalsNode.js";
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   chatbotNode: typeof chatbotNode;
   counsellors: typeof counsellors;
   dashboard: typeof dashboard;
+  doctorsNode: typeof doctorsNode;
   guestAppointments: typeof guestAppointments;
   helplines: typeof helplines;
   hospitalsNode: typeof hospitalsNode;

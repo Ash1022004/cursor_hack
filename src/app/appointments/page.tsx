@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Layout from "@/components/layout/Layout";
 import styles from "@/styles/pages/Contact.module.css";
@@ -8,6 +8,7 @@ import {
   fetchHospitals,
   type AppointmentHospitalOption,
 } from "@/lib/apifyHospitals";
+import { INDIAN_STATES_AND_UTS } from "@/lib/indianStates";
 
 type Doctor = {
   id: string;
@@ -29,28 +30,43 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(false);
   const [hospitals, setHospitals] = useState<AppointmentHospitalOption[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loadingHospitals, setLoadingHospitals] = useState(true);
+  const [indianState, setIndianState] = useState("");
+  const [loadingHospitals, setLoadingHospitals] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [list, setList] = useState<ApptRow[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [directoryError, setDirectoryError] = useState<string | null>(null);
+  /** Ignore stale responses when the user changes state before a slow Apify run finishes. */
+  const hospitalsLoadId = useRef(0);
 
-  async function loadHospitals() {
+  async function loadHospitals(stateValue: string) {
+    if (!stateValue.trim()) {
+      setHospitals([]);
+      return;
+    }
+    const loadId = ++hospitalsLoadId.current;
     setLoadingHospitals(true);
     setDirectoryError(null);
     try {
-      const rows = await fetchHospitals();
+      const rows = await fetchHospitals(stateValue);
+      if (loadId !== hospitalsLoadId.current) return;
       setHospitals(rows);
     } catch {
+      if (loadId !== hospitalsLoadId.current) return;
       setHospitals([]);
       setDirectoryError("Failed to load hospitals");
     } finally {
-      setLoadingHospitals(false);
+      if (loadId === hospitalsLoadId.current) {
+        setLoadingHospitals(false);
+      }
     }
   }
 
-  async function loadDoctors(hId: string) {
+  async function loadApifyDoctors(
+    hId: string,
+    hospitalMeta?: AppointmentHospitalOption
+  ) {
     if (!hId) {
       setDoctors([]);
       return;
@@ -58,13 +74,13 @@ export default function AppointmentsPage() {
     setLoadingDoctors(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/appointments/doctors?hospitalId=${encodeURIComponent(hId)}`
-      );
-      const data = (await res.json()) as { doctors?: Doctor[]; error?: string };
-      if (!res.ok) {
-        throw new Error(data.error || "Could not load doctors");
-      }
+      const params = new URLSearchParams({ hospitalId: hId });
+      if (hospitalMeta?.name) params.set("hospitalName", hospitalMeta.name);
+      if (hospitalMeta?.speciality) params.set("speciality", hospitalMeta.speciality);
+      const res = await fetch(`/api/apify/doctors?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = (await res.json()) as { doctors?: Doctor[] };
       setDoctors(Array.isArray(data.doctors) ? data.doctors : []);
     } catch (err) {
       setDoctors([]);
@@ -89,20 +105,41 @@ export default function AppointmentsPage() {
   }
 
   useEffect(() => {
-    void loadHospitals();
     void refreshList();
   }, []);
 
   useEffect(() => {
+    setHospitalId("");
     setDoctorId("");
     setDoctors([]);
-    if (hospitalId) {
-      void loadDoctors(hospitalId);
+    setHospitals([]);
+    setDirectoryError(null);
+    if (!indianState.trim()) {
+      return;
     }
-  }, [hospitalId]);
+    void loadHospitals(indianState);
+  }, [indianState]);
+
+  useEffect(() => {
+    setDoctorId("");
+    setDoctors([]);
+    if (!hospitalId) return;
+    const meta = hospitals.find((h) => h.id === hospitalId);
+    void loadApifyDoctors(hospitalId, meta);
+  }, [hospitalId, hospitals]);
 
   const selectedHospital = hospitals.find((h) => h.id === hospitalId);
   const selectedDoctor = doctors.find((d) => d.id === doctorId);
+
+  const cantPickHospital = Boolean(
+    !indianState.trim() ||
+      loadingHospitals ||
+      (Boolean(directoryError) && hospitals.length === 0) ||
+      (Boolean(indianState.trim()) &&
+        !loadingHospitals &&
+        hospitals.length === 0 &&
+        !directoryError)
+  );
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -126,6 +163,7 @@ export default function AppointmentsPage() {
           hospitalAddress: selectedHospital?.address,
           hospitalRating: selectedHospital?.rating,
           hospitalSpeciality: selectedHospital?.speciality,
+          indianState,
           doctorName: selectedDoctor?.name,
           doctorSpecialty: selectedDoctor?.specialty,
         }),
@@ -143,6 +181,7 @@ export default function AppointmentsPage() {
       setPreferredDate("");
       setNotes("");
       setDoctors([]);
+      if (indianState) void loadHospitals(indianState);
       await refreshList();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -176,10 +215,9 @@ export default function AppointmentsPage() {
               <div className={styles.formHeader}>
                 <h2 className={styles.formTitle}>Your details</h2>
                 <p className={styles.formSubtitle}>
-                  Hospitals come from Apify via Convex (<code className={styles.inlineCode}>APIFY_API_KEY</code>
-                  ). The first load can take up to a minute while places are fetched. Optional on Convex:{" "}
-                  <code className={styles.inlineCode}>APIFY_HOSPITAL_SEARCH_QUERY</code> (e.g. hospitals in
-                  Mumbai). Doctors use your appointment API when configured.
+                  Choose a <strong>state or UT</strong>, then a hospital in that region (India only, via Apify
+                  on Convex). Doctors listed are sample slots for that hospital—swap for a real directory
+                  later. First hospital load can take up to a minute.
                 </p>
               </div>
 
@@ -189,25 +227,45 @@ export default function AppointmentsPage() {
                   <button
                     type="button"
                     className={styles.textLinkButton}
-                    onClick={() => void loadHospitals()}
+                    onClick={() => indianState && void loadHospitals(indianState)}
                   >
                     Retry
                   </button>
                 </p>
               )}
 
-              {!loadingHospitals && hospitals.length === 0 && !directoryError && (
-                <p className={styles.faqAnswer} role="status">
-                  No hospitals yet—wait a bit and click Retry (first Apify run can take 1–2 minutes). If it
-                  stays empty, check Convex logs for <code className={styles.inlineCode}>hospitalsNode</code>{" "}
-                  or set <code className={styles.inlineCode}>APIFY_HOSPITAL_DATASET_ID</code> to a saved
-                  Apify dataset. To disable automatic map runs, set{" "}
-                  <code className={styles.inlineCode}>APIFY_HOSPITAL_AUTO_RUN_DEFAULTS=false</code> on
-                  Convex.
-                </p>
-              )}
+              {indianState.trim() &&
+                !loadingHospitals &&
+                hospitals.length === 0 &&
+                !directoryError && (
+                  <p className={styles.faqAnswer} role="status">
+                    No hospitals for this state yet—wait and Retry (Apify can take 1–2 minutes). Check Convex
+                    logs for <code className={styles.inlineCode}>hospitalsNode</code>. Dataset mode filters by
+                    state name in the address.
+                  </p>
+                )}
 
               <form onSubmit={onSubmit} className={styles.form}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label} htmlFor="indianState">
+                    State / Union territory (India)
+                  </label>
+                  <select
+                    id="indianState"
+                    className={styles.select}
+                    value={indianState}
+                    onChange={(e) => setIndianState(e.target.value)}
+                    required
+                  >
+                    <option value="">Select your state</option>
+                    {INDIAN_STATES_AND_UTS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className={styles.formRow}>
                   <div className={styles.inputGroup}>
                     <label className={styles.label} htmlFor="name">
@@ -220,7 +278,6 @@ export default function AppointmentsPage() {
                       onChange={(e) => setName(e.target.value)}
                       required
                       autoComplete="name"
-                      disabled={Boolean(directoryError) && hospitals.length === 0}
                     />
                   </div>
                   <div className={styles.inputGroup}>
@@ -235,7 +292,6 @@ export default function AppointmentsPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      disabled={Boolean(directoryError) && hospitals.length === 0}
                     />
                   </div>
                 </div>
@@ -254,7 +310,6 @@ export default function AppointmentsPage() {
                       required
                       autoComplete="tel"
                       placeholder="e.g. +91 98765 43210"
-                      disabled={Boolean(directoryError) && hospitals.length === 0}
                     />
                   </div>
                   <div className={styles.inputGroup}>
@@ -268,7 +323,6 @@ export default function AppointmentsPage() {
                       onChange={(e) => setPreferredDate(e.target.value)}
                       required
                       placeholder="e.g. 2026-04-15 morning"
-                      disabled={Boolean(directoryError) && hospitals.length === 0}
                     />
                   </div>
                 </div>
@@ -284,10 +338,14 @@ export default function AppointmentsPage() {
                       value={hospitalId}
                       onChange={(e) => setHospitalId(e.target.value)}
                       required
-                      disabled={loadingHospitals || (Boolean(directoryError) && hospitals.length === 0)}
+                      disabled={cantPickHospital}
                     >
                       <option value="">
-                        {loadingHospitals ? "Loading hospitals…" : "Select a hospital"}
+                        {!indianState.trim()
+                          ? "Select a state first"
+                          : loadingHospitals
+                            ? "Loading hospitals…"
+                            : "Select a hospital"}
                       </option>
                       {hospitals.map((h) => (
                         <option
@@ -318,11 +376,7 @@ export default function AppointmentsPage() {
                       value={doctorId}
                       onChange={(e) => setDoctorId(e.target.value)}
                       required
-                      disabled={
-                        !hospitalId ||
-                        loadingDoctors ||
-                        (Boolean(directoryError) && hospitals.length === 0)
-                      }
+                      disabled={!hospitalId || loadingDoctors || cantPickHospital}
                     >
                       <option value="">
                         {!hospitalId
@@ -352,18 +406,13 @@ export default function AppointmentsPage() {
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
                     placeholder="Symptoms, referral, or other context"
-                    disabled={Boolean(directoryError) && hospitals.length === 0}
                   />
                 </div>
 
                 <button
                   type="submit"
                   className={styles.submitButton}
-                  disabled={
-                    loading ||
-                    loadingHospitals ||
-                    (Boolean(directoryError) && hospitals.length === 0)
-                  }
+                  disabled={loading || loadingHospitals || cantPickHospital}
                 >
                   {loading ? <div className={styles.spinner} /> : "Submit request"}
                 </button>
