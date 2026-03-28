@@ -1,5 +1,5 @@
 const config = {
-    // Same-origin /api/* proxied to Convex via next.config rewrites
+    // Convex HTTP routes are proxied selectively via next.config rewrites; other /api/* stay on Next.js
     API_BASE_URL: '',
     TIMEOUT: 30000,
     RETRY_ATTEMPTS: 3,

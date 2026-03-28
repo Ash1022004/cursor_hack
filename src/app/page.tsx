@@ -23,7 +23,7 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout
-      title="Sehat Sathi - Your Safe Space for Healing & Growth"
+      title="Sehat-Saathi - Your Safe Space for Healing & Growth"
       description="A gentle, supportive place where college students can find peace, build resilience, and discover their inner strength. You're not alone in this journey."
     >
       {isLoggedIn ? (

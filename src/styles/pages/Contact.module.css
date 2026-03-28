@@ -58,6 +58,27 @@
   border-color: var(--primary-200);
 }
 
+.contactCardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.healthBackLink {
+  color: inherit;
+  text-decoration: underline;
+  font-size: 1rem;
+}
+
+.healthResultSection {
+  margin-top: var(--spacing-xl);
+}
+
+.healthError {
+  margin-top: var(--spacing-md);
+  color: var(--gray-800);
+}
+
 .contactIcon {
   width: 80px;
   height: 80px;

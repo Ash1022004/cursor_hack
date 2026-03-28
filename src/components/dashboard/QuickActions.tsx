@@ -6,10 +6,10 @@ import styles from '../../styles/components/dashboard/QuickActions.module.css';
 const QuickActions: React.FC = () => {
   const actions = [
     {
-      title: 'Start New Session',
-      description: 'Begin a new intervention session',
+      title: 'Health tools',
+      description: 'Symptom check, medicines & more',
       icon: Plus,
-      href: '/interventions/new',
+      href: '/health',
       color: 'var(--primary-500)',
     },
     {

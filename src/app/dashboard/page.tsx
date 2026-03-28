@@ -15,7 +15,7 @@ const DashboardPage: React.FC = () => {
   return (
     <ProtectedRoute>
       <Layout
-        title="Dashboard - Sehat Sathi"
+        title="Dashboard - Sehat-Saathi"
         description="Your personal mental health dashboard with progress tracking and intervention modules."
       >
       <div className={styles.dashboard}>

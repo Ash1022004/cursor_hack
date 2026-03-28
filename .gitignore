@@ -15,6 +15,9 @@ out
 # convex
 .convex
 
+# local healthcare demo data (appointments)
+data/appointments.json
+
 # misc
 .DS_Store
 *.log

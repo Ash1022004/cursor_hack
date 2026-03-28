@@ -1,21 +1,36 @@
-# Mann Mitra (SIH 2025)
+# Sehat-Saathi (healthcare platform)
 
-Next.js (App Router) frontend with a **Convex** backend. HTTP APIs stay at `/api/*` (JWT + bcrypt), proxied from Next to your Convex deployment.
+Digital psychological interventions for college students, extended with general healthcare tools (symptom guidance, medicine reference, appointment requests, label OCR demo).
 
-## Quick start
+## Disclaimer
 
-```bash
-npm install
-cp .env.example .env.local
-# Set CONVEX_SITE_URL in .env.local (see Convex dashboard → HTTP URL, ends with .convex.site)
-npx convex dev   # in one terminal: set JWT_SECRET etc. in Convex dashboard
-npm run dev      # http://localhost:3000
-```
+This platform provides general medical information and is not a substitute for professional medical advice.
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for Convex env vars, admin seeding, and Mongo migration notes.
+## New API routes (Next.js)
 
-## Layout
+| Route | Method | Purpose |
+|--------|--------|---------|
+| `/api/symptom-check` | POST | Symptoms + demographics → possible conditions, generic OTC ideas, advice (OpenAI optional, else rule-based) |
+| `/api/medicines` | GET `?q=` | Search static `data/medicines.json` |
+| `/api/appointments` | GET, POST | JSON file store at `data/appointments.json` (gitignored) |
+| `/api/verify-medicine` | POST `multipart/form-data` field `image` | Tesseract OCR + match to dataset |
 
-- `src/app/` — routes (App Router)
-- `src/components/`, `src/context/`, `src/services/` — UI and axios clients
-- `convex/` — schema, HTTP router (`http.ts`), JWT node actions, sticky notes, chatbot proxy
+Convex-backed routes (`/api/auth/*`, `/api/sticky-notes`, `/api/user/*`, `/api/admin/*`, etc.) are **proxied only for those paths** when `CONVEX_SITE_URL` is set. Other `/api/*` handlers run in Next.js.
+
+## How to run
+
+1. Install dependencies: `npm install`
+2. Copy `.env.example` to `.env.local` and set `CONVEX_SITE_URL` if you use Convex for auth/chat.
+3. Optional: `OPENAI_API_KEY` for AI-assisted symptom check (otherwise rule-based).
+4. Dev server: `npm run dev`
+5. Open [http://localhost:3000](http://localhost:3000) — **Health tools** live at `/health`.
+
+## Dependencies (added)
+
+- `tesseract.js` — server-side OCR for `/api/verify-medicine`
+
+## Scripts
+
+- `npm run dev` — Next.js + Turbopack
+- `npm run build` / `npm start` — production
+- `npm run convex:dev` — Convex dev (if used)

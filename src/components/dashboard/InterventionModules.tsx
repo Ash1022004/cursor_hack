@@ -112,7 +112,7 @@ const InterventionModules: React.FC = () => {
                   <span className={styles.durationText}>{module.duration}</span>
                 </div>
                 <Link 
-                  href={`/interventions/${module.id}`}
+                  href="/resources"
                   className={`${styles.actionButton} ${styles[module.status]}`}
                 >
                   {getStatusIcon(module.status)}

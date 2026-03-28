@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: {
-    default: "Sehat Sathi - Digital Psychological Intervention Platform",
-    template: "%s | Sehat Sathi",
+    default: "Sehat-Saathi - Digital Psychological Intervention Platform",
+    template: "%s | Sehat-Saathi",
   },
   description:
     "A comprehensive digital platform providing psychological interventions and mental health support for college students.",

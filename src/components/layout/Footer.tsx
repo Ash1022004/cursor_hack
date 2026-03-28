@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
     platform: [
       { name: 'About Us', href: '/about' },
       { name: 'How It Works', href: '/how-it-works' },
-      { name: 'Interventions', href: '/interventions' },
+      { name: 'Health Tools', href: '/health' },
       { name: 'Resources', href: '/resources' },
     ],
     support: [
@@ -43,17 +43,20 @@ const Footer: React.FC = () => {
             <div className={styles.logo}>
               <Link href="/" className={styles.logoLink}>
                 <Heart className={styles.logoIcon} />
-                <span className={styles.logoText}>Sehat Sathi</span>
+                <span className={styles.logoText}>Sehat-Saathi</span>
               </Link>
             </div>
             <p className={styles.brandDescription}>
               Empowering college students with evidence-based psychological interventions 
               and mental health support through our comprehensive digital platform.
             </p>
+            <p className={styles.medicalDisclaimer}>
+              This platform provides general medical information and is not a substitute for professional medical advice.
+            </p>
             <div className={styles.contactInfo}>
               <div className={styles.contactItem}>
                 <Mail size={16} />
-                <span>support@mannmitra.com</span>
+                <span>support@sehatsaathi.com</span>
               </div>
               <div className={styles.contactItem}>
                 <Phone size={16} />
@@ -112,7 +115,7 @@ const Footer: React.FC = () => {
         {/* Bottom Section */}
         <div className={styles.footerBottom}>
           <div className={styles.copyright}>
-            <p>&copy; {currentYear} Sehat Sathi. All rights reserved.</p>
+            <p>&copy; {currentYear} Sehat-Saathi. All rights reserved.</p>
           </div>
           <div className={styles.socialLinks}>
             {socialLinks.map((social) => {

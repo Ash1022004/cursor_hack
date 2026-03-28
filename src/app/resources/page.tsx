@@ -120,7 +120,7 @@ const ResourcesPage: React.FC = () => {
   if (showAssessments) {
     return (
       <Layout
-        title="Mental Health Assessments - Sehat Sathi"
+        title="Mental Health Assessments - Sehat-Saathi"
         description="Take validated psychological assessments to better understand your mental health."
       >
         <AssessmentSelector />
@@ -130,7 +130,7 @@ const ResourcesPage: React.FC = () => {
 
   return (
     <Layout
-      title="Resources - Sehat Sathi"
+      title="Resources - Sehat-Saathi"
       description="Access a comprehensive library of mental health resources, articles, videos, and tools designed for college students."
     >
       <div className={styles.resources}>

@@ -41,15 +41,15 @@ const AboutPage: React.FC = () => {
 
   return (
     <Layout
-      title="About Us - Sehat Sathi"
-      description="Learn about Sehat Sathi's mission to provide evidence-based psychological interventions for college students."
+      title="About Us - Sehat-Saathi"
+      description="Learn about Sehat-Saathi's mission to provide evidence-based psychological interventions for college students."
     >
       <div className={styles.about}>
         {/* Hero Section */}
         <section className={styles.hero}>
           <div className={styles.container}>
             <div className={styles.heroContent}>
-              <h1 className={styles.heroTitle}>About Sehat Sathi</h1>
+              <h1 className={styles.heroTitle}>About Sehat-Saathi</h1>
               <p className={styles.heroSubtitle}>
                 Empowering college students with accessible, evidence-based mental health support 
                 through innovative digital interventions.
@@ -64,7 +64,7 @@ const AboutPage: React.FC = () => {
             <div className={styles.missionContent}>
               <h2 className={styles.sectionTitle}>Our Mission</h2>
               <p className={styles.missionText}>
-                At Sehat Sathi, we believe that every college student deserves access to high-quality 
+                At Sehat-Saathi, we believe that every college student deserves access to high-quality 
                 mental health support. Our mission is to break down barriers to mental healthcare by 
                 providing evidence-based psychological interventions through an accessible, user-friendly 
                 digital platform.
@@ -84,7 +84,7 @@ const AboutPage: React.FC = () => {
             <div className={styles.valuesHeader}>
               <h2 className={styles.sectionTitle}>Our Values</h2>
               <p className={styles.sectionSubtitle}>
-                The principles that guide everything we do at Sehat Sathi
+                The principles that guide everything we do at Sehat-Saathi
               </p>
             </div>
             <div className={styles.valuesGrid}>

@@ -36,7 +36,7 @@ const ContactPage: React.FC = () => {
     {
       icon: Mail,
       title: 'Email Us',
-      details: 'support@mannmitra.com',
+      details: 'support@sehatsaathi.com',
       description: 'We\'ll respond within 24 hours',
     },
     {
@@ -55,8 +55,8 @@ const ContactPage: React.FC = () => {
 
   return (
     <Layout
-      title="Contact Us - Sehat Sathi"
-      description="Get in touch with the Sehat Sathi team for support, questions, or feedback."
+      title="Contact Us - Sehat-Saathi"
+      description="Get in touch with the Sehat-Saathi team for support, questions, or feedback."
     >
       <div className={styles.contact}>
         {/* Hero Section */}
@@ -199,9 +199,9 @@ const ContactPage: React.FC = () => {
             </div>
             <div className={styles.faqGrid}>
               <div className={styles.faqItem}>
-                <h3 className={styles.faqQuestion}>Is Sehat Sathi free to use?</h3>
+                <h3 className={styles.faqQuestion}>Is Sehat-Saathi free to use?</h3>
                 <p className={styles.faqAnswer}>
-                  Yes! Sehat Sathi offers free access to basic interventions and resources. 
+                  Yes! Sehat-Saathi offers free access to basic interventions and resources. 
                   Premium features are available for enhanced support.
                 </p>
               </div>
@@ -215,7 +215,7 @@ const ContactPage: React.FC = () => {
               <div className={styles.faqItem}>
                 <h3 className={styles.faqQuestion}>Can I use this alongside therapy?</h3>
                 <p className={styles.faqAnswer}>
-                  Yes! Sehat Sathi is designed to complement traditional therapy, not replace it. 
+                  Yes! Sehat-Saathi is designed to complement traditional therapy, not replace it. 
                   Many students use both for comprehensive support.
                 </p>
               </div>

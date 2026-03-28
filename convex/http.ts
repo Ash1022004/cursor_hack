@@ -16,7 +16,7 @@ http.route({
   path: "/api/health",
   method: "GET",
   handler: httpAction(async () =>
-    json({ ok: true, service: "mann-mitra-convex" })
+    json({ ok: true, service: "sehat-saathi-convex" })
   ),
 });
 

@@ -34,14 +34,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose }) => {
     if (user && messages.length === 0) {
       setMessages([{
         id: '1',
-        text: `Hi ${user.firstName}! I'm Sehat Sathi, your supportive companion. How are you feeling today? 💚`,
+        text: `Hi ${user.firstName}! I'm Sehat-Saathi, your supportive companion. How are you feeling today? 💚`,
         sender: 'bot',
         timestamp: new Date()
       }]);
     } else if (!user && messages.length === 0) {
       setMessages([{
         id: '1',
-        text: "Hi there! I'm Sehat Sathi, your supportive companion. How are you feeling today? 💚",
+        text: "Hi there! I'm Sehat-Saathi, your supportive companion. How are you feeling today? 💚",
         sender: 'bot',
         timestamp: new Date()
       }]);
@@ -127,7 +127,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose }) => {
           <div className={styles.botInfo}>
             <Bot className={styles.botIcon} />
             <div>
-              <h3>Sehat Sathi</h3>
+              <h3>Sehat-Saathi</h3>
               <span className={styles.status} style={{ color: isOnline ? '#10B981' : '#EF4444' }}>
                 {isOnline ? 'Online' : 'Offline'}
               </span>

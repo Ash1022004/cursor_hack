@@ -23,14 +23,6 @@
 | Variable | Purpose |
 | -------- | ------- |
 | `JWT_SECRET` | Student JWT auth (HTTP routes) — **required** for `/api/auth/login` and any route that calls `signJwt` |
-
-Set it from the repo (dev deployment):
-
-```bash
-npx convex env set JWT_SECRET "$(openssl rand -base64 32 | tr -d '\n')"
-```
-
-Putting `JWT_SECRET` only in Next’s `.env.local` does **not** work: Convex actions read **`process.env` on the Convex side**, which comes from the dashboard / `convex env set`, not from Next.
 | `GEMINI_API_KEY` | Default LLM (Gemini) |
 | `OPENAI_API_KEY` | Optional; used when `LLM_PROVIDER=openai` |
 | `LLM_PROVIDER` | `gemini` (default) or `openai` |
@@ -39,6 +31,14 @@ Putting `JWT_SECRET` only in Next’s `.env.local` does **not** work: Convex act
 | `EXA_API_KEY` | Semantic search for resource agent |
 | `APIFY_TOKEN` | Apify Google Search (or custom actor) for web results |
 | `APIFY_GOOGLE_SEARCH_ACTOR_ID` | Optional; default `apify/google-search-scraper` |
+
+Set `JWT_SECRET` from the repo (dev deployment):
+
+```bash
+npx convex env set JWT_SECRET "$(openssl rand -base64 32 | tr -d '\n')"
+```
+
+Putting `JWT_SECRET` only in Next’s `.env.local` does **not** work: Convex actions read **`process.env` on the Convex side**, which comes from the dashboard / `convex env set`, not from Next.
 
 Remove reliance on **`CHATBOT_SERVICE_URL`** / **`CHATBOT_API_KEY`** for the main chat flow.
 

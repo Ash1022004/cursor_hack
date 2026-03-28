@@ -36,7 +36,7 @@ const Stats: React.FC = () => {
         <div className={styles.header}>
           <h2 className={styles.title}>Trusted by Students Nationwide</h2>
           <p className={styles.subtitle}>
-            Join thousands of college students who have transformed their mental health journey with Sehat Sathi.
+            Join thousands of college students who have transformed their mental health journey with Sehat-Saathi.
           </p>
         </div>
 

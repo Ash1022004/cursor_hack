@@ -17,7 +17,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({
   children,
-  title: _title = 'Sehat Sathi - Digital Psychological Intervention Platform',
+  title: _title = 'Sehat-Saathi - Digital Psychological Intervention Platform',
   description: _description = 'A comprehensive digital platform providing psychological interventions and mental health support for college students.',
   keywords: _keywords = 'mental health, psychological intervention, college students, therapy, counseling, mindfulness, CBT',
   header,

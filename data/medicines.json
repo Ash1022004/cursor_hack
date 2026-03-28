@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Paracetamol",
+    "genericNames": ["Acetaminophen", "APAP"],
+    "uses": "Pain relief and fever reduction for mild to moderate pain (headache, muscle ache, toothache).",
+    "dosage": "Adults: commonly 500–1000 mg every 4–6 hours as needed; do not exceed maximum daily dose on product label. Adjust for children by weight per pediatric labeling.",
+    "sideEffects": "Generally well tolerated; rare rash, liver injury with overdose or chronic excess.",
+    "precautions": "Avoid or use cautiously with liver disease; avoid combining multiple products containing paracetamol; do not exceed daily limits."
+  },
+  {
+    "name": "Ibuprofen",
+    "genericNames": ["NSAID ibuprofen"],
+    "uses": "Pain, inflammation, and fever (e.g. sprains, menstrual pain, headache).",
+    "dosage": "Adults: often 200–400 mg every 4–6 hours with food as labeled; use lowest effective dose for shortest time.",
+    "sideEffects": "Stomach upset, increased bleeding risk; kidney effects with prolonged use or dehydration.",
+    "precautions": "Avoid with active ulcers, kidney disease, certain heart conditions, third trimester pregnancy; take with food."
+  },
+  {
+    "name": "Aspirin",
+    "genericNames": ["Acetylsalicylic acid"],
+    "uses": "Pain, fever, anti-inflammatory; in some cases cardiovascular prevention only under medical supervision.",
+    "dosage": "Use only as directed on label or by prescriber; low-dose cardiac use is different from analgesic dosing.",
+    "sideEffects": "GI bleeding risk, bruising; Reye's syndrome risk in children with viral illness.",
+    "precautions": "Not for children/teens with viral illness without clinician advice; caution with bleeding disorders."
+  },
+  {
+    "name": "Amoxicillin",
+    "genericNames": ["Amoxycillin"],
+    "uses": "Bacterial infections (e.g. some respiratory, ear, urinary infections) when prescribed by a clinician.",
+    "dosage": "Prescription-only; dose depends on infection type, age, and kidney function—follow prescriber exactly.",
+    "sideEffects": "Diarrhea, nausea, rash; rare serious allergic reactions.",
+    "precautions": "Penicillin allergy; complete prescribed course; discuss with clinician if prior antibiotic reactions."
+  },
+  {
+    "name": "Azithromycin",
+    "genericNames": ["Azithro"],
+    "uses": "Certain bacterial respiratory and skin infections per prescription.",
+    "dosage": "Prescription-only; dosing schedules vary (e.g. multi-day packs)—use as directed.",
+    "sideEffects": "GI upset, diarrhea; QT prolongation risk in susceptible patients.",
+    "precautions": "Drug interactions (e.g. some antiarrhythmics); liver issues—use under medical supervision."
+  },
+  {
+    "name": "Omeprazole",
+    "genericNames": ["PPI omeprazole"],
+    "uses": "Reduces stomach acid; used for GERD, gastric protection in some cases as directed.",
+    "dosage": "Typically once daily before a meal; OTC vs prescription strengths differ—follow label or prescriber.",
+    "sideEffects": "Headache, diarrhea, B12/magnesium issues with long-term use.",
+    "precautions": "Long-term PPI use should be reviewed by a clinician; interactions with certain drugs (e.g. clopidogrel—seek advice)."
+  },
+  {
+    "name": "Cetirizine",
+    "genericNames": ["Levocetirizine is related but distinct"],
+    "uses": "Allergic rhinitis, hives—reduces itching and sneezing.",
+    "dosage": "Adults: commonly 10 mg once daily; may be reduced for kidney impairment—read label.",
+    "sideEffects": "Drowsiness in some individuals, dry mouth.",
+    "precautions": "Use caution when driving until you know your response; pregnancy/breastfeeding—consult clinician."
+  },
+  {
+    "name": "Loratadine",
+    "genericNames": ["Claritin generic"],
+    "uses": "Seasonal allergies, allergic rhinitis, some skin allergies.",
+    "dosage": "Typically 10 mg once daily for adults; follow pediatric dosing on label.",
+    "sideEffects": "Generally non-sedating; occasional headache.",
+    "precautions": "Liver impairment may require dose adjustment; check interactions."
+  },
+  {
+    "name": "Metformin",
+    "genericNames": ["Glucophage"],
+    "uses": "Type 2 diabetes blood sugar management as prescribed.",
+    "dosage": "Prescription-only; titrated by clinician; often taken with meals.",
+    "sideEffects": "GI upset, rare lactic acidosis; B12 deficiency with long-term use.",
+    "precautions": "Kidney function monitoring; hold around contrast procedures per clinician; avoid excess alcohol."
+  },
+  {
+    "name": "Atorvastatin",
+    "genericNames": ["Statin"],
+    "uses": "Lowers LDL cholesterol; cardiovascular risk reduction when prescribed.",
+    "dosage": "Prescription-only; taken once daily, often evening.",
+    "sideEffects": "Muscle aches, liver enzyme changes; rare muscle injury.",
+    "precautions": "Report unexplained muscle pain; grapefruit interaction for some statins—follow prescriber advice."
+  },
+  {
+    "name": "Levothyroxine",
+    "genericNames": ["Thyroxine", "T4"],
+    "uses": "Hypothyroidism hormone replacement.",
+    "dosage": "Highly individualized; take consistently on empty stomach as directed.",
+    "sideEffects": "Over-replacement: palpitations, tremor, insomnia.",
+    "precautions": "Many drug interactions; separate from calcium/iron supplements—follow pharmacist guidance."
+  },
+  {
+    "name": "Salbutamol",
+    "genericNames": ["Albuterol"],
+    "uses": "Relief of bronchospasm in asthma/COPD via inhaler as prescribed.",
+    "dosage": "As prescribed; rescue inhaler frequency should be reviewed if used often.",
+    "sideEffects": "Tremor, tachycardia, nervousness.",
+    "precautions": "Seek urgent care if rescue inhaler does not relieve symptoms or breathing worsens."
+  }
+]

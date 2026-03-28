@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Heart, User, LogIn, UserPlus, Home, Info, Activity, BookOpen, MessageCircle, LogOut, Shield } from 'lucide-react';
+import { Menu, X, Heart, User, LogIn, UserPlus, Home, Info, BookOpen, MessageCircle, LogOut, Shield, Stethoscope } from 'lucide-react';
 import styles from '../../styles/components/layout/Header.module.css';
 import { useAuth } from '@/context/AuthContext';
 
@@ -21,7 +21,7 @@ const Header: React.FC = () => {
       description: 'Talk privately — no account',
     },
     { name: 'Our Story', href: '/about', icon: Info, description: 'Why we care' },
-    { name: 'Wellness Kit', href: '/interventions', icon: Activity, description: 'Tools for you' },
+    { name: 'Health Tools', href: '/health', icon: Stethoscope, description: 'Symptoms, medicines & care' },
     { name: 'Guides', href: '/resources', icon: BookOpen, description: 'Help & resources' },
     { name: 'Reach Out', href: '/contact', icon: MessageCircle, description: 'We\'re here for you' },
   ];
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
         <div className={styles.logo}>
           <Link href="/" className={styles.logoLink}>
             <Heart className={styles.logoIcon} />
-            <span className={styles.logoText}>Sehat Sathi</span>
+            <span className={styles.logoText}>Sehat-Saathi</span>
           </Link>
         </div>
 

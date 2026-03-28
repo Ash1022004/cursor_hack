@@ -59,8 +59,8 @@ const LoginPageInner: React.FC = () => {
 
   return (
     <Layout
-      title="Login - Sehat Sathi"
-      description="Sign in to your Sehat Sathi account to access your mental health interventions and progress tracking."
+      title="Login - Sehat-Saathi"
+      description="Sign in to your Sehat-Saathi account to access your mental health interventions and progress tracking."
     >
       <div className={styles.authContainer}>
         <div className={styles.authCard}>

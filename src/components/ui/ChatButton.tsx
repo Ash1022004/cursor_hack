@@ -13,7 +13,7 @@ const ChatButton: React.FC = () => {
         onClick={() => setIsChatOpen(true)}
       >
         <MessageCircle className={styles.icon} />
-        <span>Talk to MannMitra</span>
+        <span>Talk to Sehat-Saathi</span>
       </button>
       
       <ChatInterface 

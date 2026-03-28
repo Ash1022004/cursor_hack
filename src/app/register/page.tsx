@@ -93,13 +93,13 @@ const RegisterPage: React.FC = () => {
 
   return (
     <Layout
-      title="Sign Up - Sehat Sathi"
-      description="Create your Sehat Sathi account to start your mental health journey with evidence-based interventions."
+      title="Sign Up - Sehat-Saathi"
+      description="Create your Sehat-Saathi account to start your mental health journey with evidence-based interventions."
     >
       <div className={styles.authContainer}>
         <div className={styles.authCard}>
           <div className={styles.authHeader}>
-            <h1 className={styles.title}>Join Sehat Sathi</h1>
+            <h1 className={styles.title}>Join Sehat-Saathi</h1>
             <p className={styles.subtitle}>
               Start your mental health journey today
             </p>

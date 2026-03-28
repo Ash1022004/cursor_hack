@@ -9,7 +9,7 @@ const Testimonials: React.FC = () => {
       university: 'Stanford University',
       program: 'Computer Science',
       rating: 5,
-      text: 'Sehat Sathi helped me manage my anxiety during finals week. The mindfulness exercises and CBT techniques were incredibly effective. I feel more confident and in control of my mental health.',
+      text: 'Sehat-Saathi helped me manage my anxiety during finals week. The mindfulness exercises and CBT techniques were incredibly effective. I feel more confident and in control of my mental health.',
       avatar: 'SC',
     },
     {
@@ -17,7 +17,7 @@ const Testimonials: React.FC = () => {
       university: 'UCLA',
       program: 'Psychology',
       rating: 5,
-      text: 'As a psychology student, I was skeptical about digital interventions. But Sehat Sathi exceeded my expectations. The evidence-based approach and personalized tracking made a real difference in my stress levels.',
+      text: 'As a psychology student, I was skeptical about digital interventions. But Sehat-Saathi exceeded my expectations. The evidence-based approach and personalized tracking made a real difference in my stress levels.',
       avatar: 'MR',
     },
     {
@@ -25,7 +25,7 @@ const Testimonials: React.FC = () => {
       university: 'Harvard University',
       program: 'Pre-Med',
       rating: 5,
-      text: 'The peer support community on Sehat Sathi has been invaluable. Connecting with other pre-med students who understand the pressure has helped me feel less alone in my journey.',
+      text: 'The peer support community on Sehat-Saathi has been invaluable. Connecting with other pre-med students who understand the pressure has helped me feel less alone in my journey.',
       avatar: 'EJ',
     },
     {
@@ -44,7 +44,7 @@ const Testimonials: React.FC = () => {
         <div className={styles.header}>
           <h2 className={styles.title}>What Students Are Saying</h2>
           <p className={styles.subtitle}>
-            Real stories from college students who have transformed their mental health with Sehat Sathi.
+            Real stories from college students who have transformed their mental health with Sehat-Saathi.
           </p>
         </div>
 
